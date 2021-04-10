@@ -1,0 +1,84 @@
+from glob import glob
+from pathlib import Path
+
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+def normalize(df):
+    pos = [(df[f"X_{i}"], df[f"Y_{i}"], df[f"Z_{i}"]) for i in range(68)]
+    T = (df["pose_Tx"], df["pose_Ty"], df["pose_Tz"])
+    pitch, yaw, roll = (df["pose_Rx"], df["pose_Ry"], df["pose_Rz"])
+    # Left handed coordinate system
+    R_x = np.array([
+        [1, 0, 0],
+        [0, np.cos(pitch), np.sin(pitch)],
+        [0, -np.sin(pitch), np.cos(pitch)],
+    ])
+    R_y = np.array([
+        [np.cos(yaw), 0, -np.sin(yaw)],
+        [0, 1, 0],
+        [np.sin(yaw), 0, np.cos(yaw)],
+    ])
+    R_z = np.array([
+        [np.cos(roll), np.sin(roll), 0],
+        [-np.sin(roll), np.cos(roll), 0],
+        [0, 0, 1],
+    ])
+    R = R_x @ R_y @ R_z
+    print(T, R, pos[0], sep="\n")
+    norm = [-R @ (np.array(p) - T) for p in pos]
+    return norm
+
+def render(df):
+    fig = plt.figure()
+    ax = fig.gca(projection="3d")
+
+    norm = normalize(df)
+    X, Y, Z = zip(*norm)
+    ax.scatter(X, Y, Z, marker="o")
+
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.view_init(elev=100, azim=-90)
+    plt.tight_layout()
+    plt.show()
+
+
+def main():
+    root = Path("data") / "1BHOflzxPjI" / "processed"
+    processed = root / "all_frames.csv"
+    if processed.exists():
+        df = pd.read_csv(str(processed))
+    else:
+        data = [
+            pd.read_csv(fp, sep=", ").nlargest(1, ["confidence"])
+            for fp in sorted(glob(str(root / "frame_*.csv")))
+        ]
+        df = pd.concat(data)
+        df.to_csv(str(root / "all_frames.csv"))
+
+    # return render(df.iloc[0])
+    print(df["confidence"].mean(), (df["confidence"] < 0.7).sum())
+
+    start = None
+    cv2.namedWindow("frame")
+    for fp in sorted(glob(str(root / "*.jpg"))):
+        frame = int(fp.split("_")[-1].split(".")[0])
+        if start is None:
+            start = frame
+
+        if df.iloc[frame - start]["confidence"] < 0.7:
+            continue
+
+        img = cv2.imread(fp, cv2.IMREAD_ANYCOLOR)
+        cv2.imshow("frame", img)
+        k = cv2.waitKey(0)
+        if k == 27:
+            break
+
+
+if __name__ == "__main__":
+    main()
