@@ -86,8 +86,15 @@ def main(save=False):
             cv2.imwrite(str(path / f"frame_{int(frame):04}.png"), src)
         else:
             cv2.imshow("frame", src)
-            cv2.waitKey(1)
-    return
+            k = cv2.waitKey(0)
+            if k == 27: # esc key
+                break
+            elif k == ord("s"):
+                cv2.imwrite("saved.png", src)
+                continue
+
+    cv2.destroyAllWindows()
+    capture.release()
 
 
 if __name__ == "__main__":
