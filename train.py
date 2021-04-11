@@ -126,9 +126,9 @@ def main(hparams, checkpoint_path=None):
     train_loader = DataLoader(
         trainset,
         num_workers=1,
-        shuffle=False,
+        shuffle=True,
         sampler=None,
-        batch_size=1,
+        batch_size=hparams.batch_size,
         pin_memory=False,
         drop_last=True,
         collate_fn=collate_fn,

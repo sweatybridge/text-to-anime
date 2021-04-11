@@ -1,10 +1,11 @@
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from face import load_frames, normalize
+from face import normalize
 from preprocess import parse_data
 from text import text_to_sequence
 
@@ -23,7 +24,7 @@ class TextLandmarkLoader(Dataset):
         self.text_cleaners = ["english_cleaners"]
 
     def get_landmarks(self, path):
-        df = load_frames(path)
+        df = pd.read_csv(str(path))
         norm = [normalize(row).reshape(-1) for _, row in df.iterrows()]
         return torch.FloatTensor(norm).t()
 
@@ -35,7 +36,6 @@ class TextLandmarkLoader(Dataset):
     def __getitem__(self, index):
         fp = self.landmark_paths[index]
         landmarks = self.get_landmarks(fp)
-        video_id = fp.split("/")[1]
         clip = Path("lrs3_v0.4") / self.label_dir / fp.parent.stem / fp.stem
         text = self.get_text(clip.with_suffix(".txt"))
         return (text, landmarks)
