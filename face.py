@@ -2,8 +2,8 @@ from glob import glob
 from pathlib import Path
 
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 
@@ -12,33 +12,40 @@ def normalize(df):
     T = (df["pose_Tx"], df["pose_Ty"], df["pose_Tz"])
     pitch, yaw, roll = (df["pose_Rx"], df["pose_Ry"], df["pose_Rz"])
     # Left handed coordinate system
-    R_x = np.array([
-        [1, 0, 0],
-        [0, np.cos(pitch), np.sin(pitch)],
-        [0, -np.sin(pitch), np.cos(pitch)],
-    ])
-    R_y = np.array([
-        [np.cos(yaw), 0, -np.sin(yaw)],
-        [0, 1, 0],
-        [np.sin(yaw), 0, np.cos(yaw)],
-    ])
-    R_z = np.array([
-        [np.cos(roll), np.sin(roll), 0],
-        [-np.sin(roll), np.cos(roll), 0],
-        [0, 0, 1],
-    ])
+    R_x = np.array(
+        [
+            [1, 0, 0],
+            [0, np.cos(pitch), np.sin(pitch)],
+            [0, -np.sin(pitch), np.cos(pitch)],
+        ]
+    )
+    R_y = np.array(
+        [
+            [np.cos(yaw), 0, -np.sin(yaw)],
+            [0, 1, 0],
+            [np.sin(yaw), 0, np.cos(yaw)],
+        ]
+    )
+    R_z = np.array(
+        [
+            [np.cos(roll), np.sin(roll), 0],
+            [-np.sin(roll), np.cos(roll), 0],
+            [0, 0, 1],
+        ]
+    )
     R = R_x @ R_y @ R_z
-    print(T, R, pos[0], sep="\n")
+    # print(T, R, pos[0], sep="\n")
     norm = [-R @ (np.array(p) - T) for p in pos]
-    return norm
+    return np.array(norm)
+
 
 def render(df):
     fig = plt.figure()
     ax = fig.gca(projection="3d")
 
     norm = normalize(df)
-    X, Y, Z = zip(*norm)
-    ax.scatter(X, Y, Z, marker="o")
+    # X, Y, Z = zip(*norm)
+    ax.scatter(norm[:, 0], norm[:, 1], norm[:, 2], marker="o")
 
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
@@ -47,19 +54,23 @@ def render(df):
     plt.show()
 
 
-def main():
-    root = Path("data") / "1BHOflzxPjI" / "processed"
+def load_frames(root: Path):
     processed = root / "all_frames.csv"
     if processed.exists():
-        df = pd.read_csv(str(processed))
-    else:
-        data = [
-            pd.read_csv(fp, sep=", ").nlargest(1, ["confidence"])
-            for fp in sorted(glob(str(root / "frame_*.csv")))
-        ]
-        df = pd.concat(data)
-        df.to_csv(str(root / "all_frames.csv"))
+        return pd.read_csv(str(processed))
 
+    data = [
+        pd.read_csv(fp, sep=", ").nlargest(1, ["confidence"])
+        for fp in sorted(glob(str(root / "frame_*.csv")))
+    ]
+    df = pd.concat(data)
+    df.to_csv(str(root / "all_frames.csv"))
+    return df
+
+
+def main():
+    root = Path("data") / "1BHOflzxPjI" / "processed"
+    df = load_frames(root)
     # return render(df.iloc[0])
     print(df["confidence"].mean(), (df["confidence"] < 0.7).sum())
 
