@@ -5,34 +5,21 @@ from pathlib import Path
 import cv2
 import pandas as pd
 
-
-def parse_data(fp):
-    with open(fp, "r") as f:
-        contents = f.read()
-    parts = contents.split("\n\n")
-
-    meta = {}
-    for line in parts[0].split("\n"):
-        key, value = line.split(":")
-        meta[key] = value.strip()
-
-    bbox = pd.read_csv(StringIO(parts[1]), sep="\s+")
-    text = pd.read_csv(StringIO(parts[2]), sep="\s+") if len(parts) > 2 else pd.DataFrame()
-    return meta, bbox, text
+from preprocess import parse_data
 
 
 def main(save=False):
-    # fp = sorted(glob("lrs3_v0.4/pretrain/1BHOflzxPjI/*.txt"))[0]
-    fp = sorted(glob("lrs3_v0.4/trainval/1BHOflzxPjI/*.txt"))[0]
-    meta, bbox, text = parse_data(fp)
-    capture = cv2.VideoCapture(f"data/{meta['Ref']}.mp4")
+    video_id = "1BHOflzxPjI"
+    capture = cv2.VideoCapture(f"data/{video_id}.mp4")
     cv2.namedWindow(winname="frame")
-
     fps = capture.get(cv2.CAP_PROP_FPS)
     width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
     height = capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    print(fps, text.columns)
 
+    # fp = sorted(glob("lrs3_v0.4/pretrain/1BHOflzxPjI/*.txt"))[0]
+    fp = sorted(glob(f"lrs3_v0.4/trainval/{video_id}/*.txt"))[0]
+    meta, bbox, text = parse_data(fp)
+    print(fps, text.columns)
     bbox["FRAME"] *= fps / 25
     bbox.set_index("FRAME", inplace=True)
     if not text.empty:
@@ -86,7 +73,7 @@ def main(save=False):
                     )
 
         if save:
-            path = Path("valdata" if "val" in fp.split("/")[1] else "data") / meta["Ref"]
+            path = Path("valdata" if "val" in fp.split("/")[1] else "data") / video_id
             path.mkdir(exist_ok=True)
             cv2.imwrite(str(path / f"frame_{int(frame):04}.png"), src)
         else:

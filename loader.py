@@ -1,5 +1,3 @@
-import random
-from glob import glob
 from pathlib import Path
 
 import numpy as np
@@ -7,8 +5,8 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 from face import load_frames, normalize
+from preprocess import parse_data
 from text import text_to_sequence
-from vis import parse_data
 
 
 class TextLandmarkLoader(Dataset):
@@ -19,29 +17,27 @@ class TextLandmarkLoader(Dataset):
     """
 
     def __init__(self, train=True):
-        root = "data" if train else "valdata"
-        self.landmark_paths = list(
-            sorted(fp for fp in glob(f"{root}/*/processed") if "_" not in fp)
-        )
+        self.label_dir = "pretrain" if train else "trainval"
+        label_path = Path("clean") / self.label_dir
+        self.landmark_paths = list(sorted(label_path.glob("*/*.csv")))
         self.text_cleaners = ["english_cleaners"]
 
-    def get_landmarks(self, root):
-        df = load_frames(root)
+    def get_landmarks(self, path):
+        df = load_frames(path)
         norm = [normalize(row).reshape(-1) for _, row in df.iterrows()]
         return torch.FloatTensor(norm).t()
 
-    def get_text(self, video):
-        # TODO: use all clips from this video
-        clip = Path("lrs3_v0.4") / "pretrain" / video.replace("_", "S") / "00001.txt"
-        meta, _, _ = parse_data(clip)
+    def get_text(self, path):
+        meta, _, _ = parse_data(path)
         norm = text_to_sequence(meta["Text"], self.text_cleaners)
         return torch.IntTensor(norm)
 
     def __getitem__(self, index):
         fp = self.landmark_paths[index]
-        landmarks = self.get_landmarks(Path(fp))
+        landmarks = self.get_landmarks(fp)
         video_id = fp.split("/")[1]
-        text = self.get_text(video_id)
+        clip = Path("lrs3_v0.4") / self.label_dir / fp.parent.stem / fp.stem
+        text = self.get_text(clip.with_suffix(".txt"))
         return (text, landmarks)
 
     def __len__(self):

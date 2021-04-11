@@ -99,7 +99,9 @@ def main(hparams, checkpoint_path=None):
 
     model = Tacotron2(hparams).cuda()
     # Initialise with pretrained weights and freeze
-    pretrained = torch.hub.load("nvidia/DeepLearningExamples:torchhub", "nvidia_tacotron2").cuda()
+    pretrained = torch.hub.load(
+        "nvidia/DeepLearningExamples:torchhub", "nvidia_tacotron2"
+    ).cuda()
     model.embedding.weight = pretrained.embedding.weight
     model.embedding.weight.requires_grad = False
 
