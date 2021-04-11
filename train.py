@@ -97,8 +97,16 @@ def main(hparams, checkpoint_path=None):
     torch.manual_seed(hparams.seed)
     torch.cuda.manual_seed(hparams.seed)
 
-    # tacotron2 = torch.hub.load('nvidia/DeepLearningExamples:torchhub', 'nvidia_tacotron2')
     model = Tacotron2(hparams).cuda()
+    # Initialise with pretrained weights and freeze
+    tacotron2 = torch.hub.load("nvidia/DeepLearningExamples:torchhub", "nvidia_tacotron2")
+    self.embedding.weight = tacotron2.embedding.weight
+    self.embedding.weight.requires_grad = False
+
+    self.encoder.load_state_dict(tacotron2.encoder.state_dict())
+    for param in self.encoder.parameters():
+        param.requires_grad = False
+
     if hparams.fp16_run:
         model.decoder.attention_layer.score_mask_value = np.finfo("float16").min
 
