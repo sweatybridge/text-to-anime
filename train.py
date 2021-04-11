@@ -7,9 +7,9 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from hparams import create_hparams
 from loader import TextLandmarkCollate, TextLandmarkLoader
 from model import Tacotron2
+from utils import HParams
 
 
 class Tacotron2Loss(nn.Module):
@@ -87,14 +87,13 @@ def validate(model, criterion, valset, iteration, batch_size, collate_fn):
     return val_loss
 
 
-def main(output_directory, checkpoint_path, hparams):
+def main(hparams, checkpoint_path=None):
     """Training and validation logging results to tensorboard and stdout
 
     Params
     ------
-    output_directory (string): directory to save checkpoints and logs
-    checkpoint_path(string): checkpoint path
     hparams (object): comma separated list of "name=value" pairs.
+    checkpoint_path(string): checkpoint path
     """
     torch.manual_seed(hparams.seed)
     torch.cuda.manual_seed(hparams.seed)
@@ -191,7 +190,7 @@ def main(output_directory, checkpoint_path, hparams):
 
 
 if __name__ == "__main__":
-    hparams = create_hparams()
+    hparams = HParams(batch_size=1)
 
     torch.backends.cudnn.enabled = hparams.cudnn_enabled
     torch.backends.cudnn.benchmark = hparams.cudnn_benchmark
@@ -200,4 +199,4 @@ if __name__ == "__main__":
     print("cuDNN Enabled:", hparams.cudnn_enabled)
     print("cuDNN Benchmark:", hparams.cudnn_benchmark)
 
-    main("output", None, hparams)
+    main(hparams)
