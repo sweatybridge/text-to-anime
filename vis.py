@@ -17,12 +17,13 @@ def parse_data(fp):
         meta[key] = value.strip()
 
     bbox = pd.read_csv(StringIO(parts[1]), sep="\s+")
-    text = pd.read_csv(StringIO(parts[2]), sep="\s+")
+    text = pd.read_csv(StringIO(parts[2]), sep="\s+") if len(parts) > 2 else pd.DataFrame()
     return meta, bbox, text
 
 
 def main(save=False):
-    fp = sorted(glob("lrs3_v0.4/pretrain/0Bhk65bYSI0/*.txt"))[0]
+    # fp = sorted(glob("lrs3_v0.4/pretrain/1BHOflzxPjI/*.txt"))[0]
+    fp = sorted(glob("lrs3_v0.4/trainval/1BHOflzxPjI/*.txt"))[0]
     meta, bbox, text = parse_data(fp)
     capture = cv2.VideoCapture(f"data/{meta['Ref']}.mp4")
     cv2.namedWindow(winname="frame")
@@ -34,15 +35,19 @@ def main(save=False):
 
     bbox["FRAME"] *= fps / 25
     bbox.set_index("FRAME", inplace=True)
-    text.set_index("START", inplace=True)
+    if not text.empty:
+        text.set_index("START", inplace=True)
 
     start = bbox.index.min()
+    end = bbox.index.max()
     offset = start / fps
     while capture.isOpened():
         _, src = capture.read()
         frame = capture.get(cv2.CAP_PROP_POS_FRAMES)
         if frame < start:
             continue
+        if frame > end:
+            break
 
         if not save:
             idx = bbox.index.get_loc(frame, method="nearest")
@@ -60,27 +65,28 @@ def main(save=False):
                 thickness=3,
             )
 
-        timestamp = capture.get(cv2.CAP_PROP_POS_MSEC) / 1000 - offset
-        if timestamp > text.index[-1]:
-            break
+        if not text.empty:
+            timestamp = capture.get(cv2.CAP_PROP_POS_MSEC) / 1000 - offset
+            if timestamp > text.index[-1]:
+                continue
 
-        if timestamp >= text.index[0]:
-            idx = text.index.get_loc(timestamp, method="pad")
-            curr = text.iloc[idx]
-            if timestamp <= curr["END"]:
-                src = cv2.putText(
-                    img=src,
-                    text=curr["WORD"],
-                    org=(int(width / 2), int(height - 20)),
-                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                    fontScale=1,
-                    color=(255, 255, 255),
-                    thickness=3,
-                    lineType=cv2.LINE_AA,
-                )
+            if timestamp >= text.index[0]:
+                idx = text.index.get_loc(timestamp, method="pad")
+                curr = text.iloc[idx]
+                if timestamp <= curr["END"]:
+                    src = cv2.putText(
+                        img=src,
+                        text=curr["WORD"],
+                        org=(int(width / 2), int(height - 20)),
+                        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        fontScale=1,
+                        color=(255, 255, 255),
+                        thickness=3,
+                        lineType=cv2.LINE_AA,
+                    )
 
         if save:
-            path = Path("data") / meta["Ref"]
+            path = Path("valdata" if "val" in fp.split("/")[1] else "data") / meta["Ref"]
             path.mkdir(exist_ok=True)
             cv2.imwrite(str(path / f"frame_{int(frame):04}.png"), src)
         else:

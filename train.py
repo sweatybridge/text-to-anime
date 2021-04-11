@@ -59,7 +59,7 @@ def save_checkpoint(model, optimizer, scaler, learning_rate, iteration, filepath
     )
 
 
-def validate(model, criterion, valset, iteration, batch_size, collate_fn):
+def validate(model, criterion, valset, batch_size, collate_fn):
     """Handles all the validation scoring and printing"""
     model.eval()
     with torch.no_grad():
@@ -83,7 +83,6 @@ def validate(model, criterion, valset, iteration, batch_size, collate_fn):
         val_loss = val_loss / (i + 1)
 
     model.train()
-    print(f"Validation loss {iteration}: {val_loss:9f}")
     return val_loss
 
 
@@ -134,7 +133,6 @@ def main(hparams, checkpoint_path=None):
         )
         if hparams.use_saved_learning_rate:
             learning_rate = _learning_rate
-        iteration += 1  # next iteration is iteration + 1
         epoch_offset = max(0, int(iteration / len(train_loader)))
 
     model.train()
@@ -167,8 +165,8 @@ def main(hparams, checkpoint_path=None):
             scaler.update()
             optimizer.zero_grad()
 
+            iteration += 1
             if is_overflow:
-                iteration += 1
                 continue
 
             duration = time.perf_counter() - start
@@ -179,14 +177,13 @@ def main(hparams, checkpoint_path=None):
 
             if iteration % hparams.iters_per_checkpoint == 0:
                 val_loss = validate(
-                    model, criterion, valset, iteration, hparams.batch_size, collate_fn
+                    model, criterion, valset, hparams.batch_size, collate_fn
                 )
+                print(f"Validation loss {iteration}: {val_loss:9f}")
                 if val_loss < best:
                     save_checkpoint(
                         model, optimizer, scaler, learning_rate, iteration, "best"
                     )
-
-            iteration += 1
 
 
 if __name__ == "__main__":
