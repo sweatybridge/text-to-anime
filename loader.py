@@ -18,8 +18,8 @@ class TextLandmarkLoader(Dataset):
     4) normalizes facial landmarks from openface
     """
 
-    def __init__(self, train=False):
-        root = "traindata" if train else "valdata"
+    def __init__(self, train=True):
+        root = "data" if train else "valdata"
         self.landmark_paths = list(
             sorted(fp for fp in glob(f"{root}/*/processed") if "_" not in fp)
         )

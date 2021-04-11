@@ -1,7 +1,6 @@
+from glob import glob
 from io import StringIO
 from pathlib import Path
-
-from glob import glob
 
 import cv2
 import pandas as pd
@@ -87,7 +86,7 @@ def main(save=False):
         else:
             cv2.imshow("frame", src)
             k = cv2.waitKey(0)
-            if k == 27: # esc key
+            if k == 27:  # esc key
                 break
             elif k == ord("s"):
                 cv2.imwrite("saved.png", src)

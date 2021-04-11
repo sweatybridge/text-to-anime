@@ -1,4 +1,8 @@
 opencv-python
 matplotlib
 pandas
+torch
 #eos-py
+inflect
+unidecode
+#tensorboard
