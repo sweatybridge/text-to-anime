@@ -100,11 +100,11 @@ def main(hparams, checkpoint_path=None):
     model = Tacotron2(hparams).cuda()
     # Initialise with pretrained weights and freeze
     tacotron2 = torch.hub.load("nvidia/DeepLearningExamples:torchhub", "nvidia_tacotron2")
-    self.embedding.weight = tacotron2.embedding.weight
-    self.embedding.weight.requires_grad = False
+    model.embedding.weight = tacotron2.embedding.weight
+    model.embedding.weight.requires_grad = False
 
-    self.encoder.load_state_dict(tacotron2.encoder.state_dict())
-    for param in self.encoder.parameters():
+    model.encoder.load_state_dict(tacotron2.encoder.state_dict())
+    for param in model.encoder.parameters():
         param.requires_grad = False
 
     if hparams.fp16_run:
