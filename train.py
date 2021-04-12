@@ -32,20 +32,20 @@ class Tacotron2Loss(nn.Module):
         return mel_loss + post_loss + gate_loss
 
 
-def load_checkpoint(checkpoint_path, model, optimizer, scaler):
+def load_checkpoint(checkpoint_path, model, optimizer, scaler, scheduler):
     assert os.path.isfile(checkpoint_path)
     print(f"Loading checkpoint '{checkpoint_path}'")
     checkpoint_dict = torch.load(checkpoint_path, map_location="cpu")
     model.load_state_dict(checkpoint_dict["state_dict"])
     optimizer.load_state_dict(checkpoint_dict["optimizer"])
     scaler.load_state_dict(checkpoint_dict["scaler"])
-    learning_rate = checkpoint_dict["learning_rate"]
+    scheduler.load_state_dict(checkpoint_dict["scheduler"])
     iteration = checkpoint_dict["iteration"]
     print(f"Loaded checkpoint '{checkpoint_path}' from iteration {iteration}")
-    return learning_rate, iteration
+    return iteration
 
 
-def save_checkpoint(model, optimizer, scaler, learning_rate, iteration, filepath):
+def save_checkpoint(model, optimizer, scaler, scheduler, iteration, filepath):
     print(f"Saving model and optimizer state at iteration {iteration} to {filepath}")
     torch.save(
         {
@@ -53,7 +53,7 @@ def save_checkpoint(model, optimizer, scaler, learning_rate, iteration, filepath
             "state_dict": model.state_dict(),
             "optimizer": optimizer.state_dict(),
             "scaler": scaler.state_dict(),
-            "learning_rate": learning_rate,
+            "scheduler": scheduler.state_dict(),
         },
         filepath,
     )
@@ -97,8 +97,8 @@ def main(hparams, checkpoint_path=None):
     torch.manual_seed(hparams.seed)
     torch.cuda.manual_seed(hparams.seed)
 
+    # Initialise model with pretrained weights and freeze
     model = Tacotron2(hparams).cuda()
-    # Initialise with pretrained weights and freeze
     pretrained = torch.hub.load(
         "nvidia/DeepLearningExamples:torchhub", "nvidia_tacotron2"
     ).cuda()
@@ -111,13 +111,6 @@ def main(hparams, checkpoint_path=None):
 
     if hparams.fp16_run:
         model.decoder.attention_layer.score_mask_value = np.finfo("float16").min
-
-    learning_rate = hparams.learning_rate
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=learning_rate, weight_decay=hparams.weight_decay
-    )
-    scaler = torch.cuda.amp.GradScaler(enabled=hparams.fp16_run)
-    criterion = Tacotron2Loss()
 
     # Setup data loaders
     trainset = TextLandmarkLoader()
@@ -137,25 +130,32 @@ def main(hparams, checkpoint_path=None):
     # Load checkpoint if one exists
     iteration = 0
     epoch_offset = 0
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=hparams.learning_rate,
+        weight_decay=hparams.weight_decay,
+    )
+    lr_lambda = lambda step: hparams.scheduler_step ** 0.5 * min(
+        (step + 1) * hparams.scheduler_step ** -1.5, (step + 1) ** -0.5
+    )
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+    scaler = torch.cuda.amp.GradScaler(enabled=hparams.fp16_run)
+    criterion = Tacotron2Loss()
+
     if checkpoint_path is not None:
-        _learning_rate, iteration = load_checkpoint(
-            checkpoint_path, model, optimizer, scaler
+        iteration = load_checkpoint(
+            checkpoint_path, model, optimizer, scaler, scheduler
         )
-        if hparams.use_saved_learning_rate:
-            learning_rate = _learning_rate
         epoch_offset = max(0, int(iteration / len(train_loader)))
 
     model.train()
     is_overflow = False
     best = 100
     # ================ MAIN TRAINNIG LOOP! ===================
+    start = time.perf_counter()
     for epoch in range(epoch_offset, hparams.epochs):
         print(f"Epoch: {epoch}")
         for i, batch in enumerate(train_loader):
-            start = time.perf_counter()
-            for param_group in optimizer.param_groups:
-                param_group["lr"] = learning_rate
-
             model.zero_grad()
             with torch.cuda.amp.autocast():
                 x, y = model.parse_batch(batch)
@@ -192,7 +192,7 @@ def main(hparams, checkpoint_path=None):
                 print(f"Validation loss {iteration}: {val_loss:9f}")
                 if val_loss < best:
                     save_checkpoint(
-                        model, optimizer, scaler, learning_rate, iteration, "best"
+                        model, optimizer, scaler, scheduler, iteration, "best.pt"
                     )
 
 
