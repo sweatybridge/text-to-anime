@@ -5,6 +5,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib import animation
 
 
 def normalize(df):
@@ -35,8 +36,8 @@ def normalize(df):
     )
     R = R_x @ R_y @ R_z
     # print(T, R, pos[0], sep="\n")
-    norm = [-R @ (np.array(p) - T) for p in pos]
-    return np.array(norm)
+    norm = -R @ (np.array(pos) - T).T
+    return norm.T
 
 
 def render(df):
@@ -68,7 +69,7 @@ def load_frames(root: Path):
     return df
 
 
-def render():
+def main():
     root = Path("data") / "1BHOflzxPjI" / "processed"
     df = load_frames(root)
     # return render(df.iloc[0])
@@ -91,7 +92,7 @@ def render():
             break
 
 
-def main(video_id, train=True):
+def postprocess(video_id, train=True):
     label_dir = "pretrain" if train else "trainval"
     clean = Path("clean") / label_dir / video_id
     clean.mkdir(parents=True, exist_ok=True)
@@ -104,6 +105,34 @@ def main(video_id, train=True):
         if not invalid:
             cp = (clean / fp.stem).with_suffix(".csv")
             df.to_csv(str(cp))
+
+
+def update_marker(frame, markers):
+    markers._offsets3d = (frame[:, 0], frame[:, 1], frame[:, 2])
+
+
+def animate(data):
+    if len(data.shape) == 2:
+        data = data.reshape((68, 3, -1)).transpose(2, 0, 1)
+
+    print(data[0].shape)
+    fig = plt.figure()
+    ax = fig.gca(projection="3d")
+    markers = ax.scatter(data[0, :, 0], data[0, :, 1], data[0, :, 2], marker="o")
+
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.view_init(elev=100, azim=-90)
+    plt.tight_layout()
+
+    anim = animation.FuncAnimation(
+        fig=fig,
+        frames=data,
+        func=update_marker,
+        fargs=(markers,),
+        interval=40,
+    )
+    plt.show()
 
 
 if __name__ == "__main__":
