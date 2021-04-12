@@ -138,10 +138,12 @@ def main(hparams, checkpoint_path=None):
         lr=hparams.learning_rate,
         weight_decay=hparams.weight_decay,
     )
-    lr_lambda = lambda step: hparams.scheduler_step ** 0.5 * min(
-        (step + 1) * hparams.scheduler_step ** -1.5, (step + 1) ** -0.5
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer,
+        max_lr=hparams.learning_rate,
+        steps_per_epoch=len(train_loader),
+        epochs=hparams.epochs,
     )
-    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
     scaler = torch.cuda.amp.GradScaler(enabled=hparams.fp16_run)
     criterion = Tacotron2Loss()
 
@@ -154,10 +156,10 @@ def main(hparams, checkpoint_path=None):
     model.train()
     is_overflow = False
     # ================ MAIN TRAINNIG LOOP! ===================
-    start = time.perf_counter()
     for epoch in range(epoch_offset, hparams.epochs):
         print(f"Epoch: {epoch}")
         for i, batch in enumerate(train_loader):
+            start = time.perf_counter()
             model.zero_grad()
             with torch.cuda.amp.autocast():
                 x, y = model.parse_batch(batch)
