@@ -41,19 +41,21 @@ def load_checkpoint(checkpoint_path, model, optimizer, scaler, scheduler):
     scaler.load_state_dict(checkpoint_dict["scaler"])
     scheduler.load_state_dict(checkpoint_dict["scheduler"])
     iteration = checkpoint_dict["iteration"]
+    val_loss = checkpoint_dict["val_loss"]
     print(f"Loaded checkpoint '{checkpoint_path}' from iteration {iteration}")
-    return iteration
+    return val_loss, iteration
 
 
-def save_checkpoint(model, optimizer, scaler, scheduler, iteration, filepath):
+def save_checkpoint(model, optimizer, scaler, scheduler, iteration, val_loss, filepath):
     print(f"Saving model and optimizer state at iteration {iteration} to {filepath}")
     torch.save(
         {
+            "val_loss": val_loss,
             "iteration": iteration,
-            "state_dict": model.state_dict(),
-            "optimizer": optimizer.state_dict(),
-            "scaler": scaler.state_dict(),
             "scheduler": scheduler.state_dict(),
+            "scaler": scaler.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "state_dict": model.state_dict(),
         },
         filepath,
     )
@@ -128,6 +130,7 @@ def main(hparams, checkpoint_path=None):
     )
 
     # Load checkpoint if one exists
+    best = 100
     iteration = 0
     epoch_offset = 0
     optimizer = torch.optim.Adam(
@@ -143,14 +146,13 @@ def main(hparams, checkpoint_path=None):
     criterion = Tacotron2Loss()
 
     if checkpoint_path is not None:
-        iteration = load_checkpoint(
+        best, iteration = load_checkpoint(
             checkpoint_path, model, optimizer, scaler, scheduler
         )
         epoch_offset = max(0, int(iteration / len(train_loader)))
 
     model.train()
     is_overflow = False
-    best = 100
     # ================ MAIN TRAINNIG LOOP! ===================
     start = time.perf_counter()
     for epoch in range(epoch_offset, hparams.epochs):
@@ -174,6 +176,7 @@ def main(hparams, checkpoint_path=None):
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad()
+            scheduler.step()
 
             iteration += 1
             if is_overflow:
@@ -192,8 +195,15 @@ def main(hparams, checkpoint_path=None):
                 print(f"Validation loss {iteration}: {val_loss:9f}")
                 if val_loss < best:
                     save_checkpoint(
-                        model, optimizer, scaler, scheduler, iteration, "best.pt"
+                        model,
+                        optimizer,
+                        scaler,
+                        scheduler,
+                        iteration,
+                        val_loss,
+                        "best.pt",
                     )
+                    best = val_loss
 
 
 if __name__ == "__main__":
