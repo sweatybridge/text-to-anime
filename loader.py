@@ -21,11 +21,22 @@ class TextLandmarkLoader(Dataset):
         self.label_dir = "pretrain" if train else "trainval"
         label_path = Path("clean") / self.label_dir
         self.landmark_paths = list(sorted(label_path.glob("*/*.csv")))
+        self.speaker_embedding = {}
+        for path in self.landmark_paths:
+            speaker = path.parent.stem
+            if speaker not in self.speaker_embedding:
+                self.speaker_embedding[speaker] = []
+            df = pd.read_csv(str(path)).iloc[0]
+            norm = normalize(df)[48:].reshape(-1)
+            self.speaker_embedding[speaker].append(norm)
+        for k, v in self.speaker_embedding.items():
+            self.speaker_embedding[k] = np.mean(v, axis=0)
         self.text_cleaners = ["english_cleaners"]
 
     def get_landmarks(self, path):
+        speaker = self.speaker_embedding[path.parent.stem]
         df = pd.read_csv(str(path))
-        norm = [normalize(row).reshape(-1) for _, row in df.iterrows()]
+        norm = [normalize(row)[48:].reshape(-1) - speaker for _, row in df.iterrows()]
         return torch.FloatTensor(norm).t()
 
     def get_text(self, path):

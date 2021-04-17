@@ -113,7 +113,8 @@ def update_marker(frame, markers):
 
 def animate(data):
     if len(data.shape) == 2:
-        data = data.reshape((68, 3, -1)).transpose(2, 0, 1)
+        dim = (data.shape[0] // 3, 3, -1)
+        data = data.reshape(dim).transpose(2, 0, 1)
 
     print(data[0].shape)
     fig = plt.figure()
