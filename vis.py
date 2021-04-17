@@ -8,8 +8,7 @@ import pandas as pd
 from preprocess import parse_data
 
 
-def main(save=False):
-    video_id = "1BHOflzxPjI"
+def main(video_id, save=False):
     capture = cv2.VideoCapture(f"data/{video_id}.mp4")
     cv2.namedWindow(winname="frame")
     fps = capture.get(cv2.CAP_PROP_FPS)
@@ -90,4 +89,4 @@ def main(save=False):
 
 
 if __name__ == "__main__":
-    main(save=True)
+    main(video_id="1BHOflzxPjI", save=True)

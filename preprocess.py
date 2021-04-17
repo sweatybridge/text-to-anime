@@ -22,8 +22,9 @@ def parse_data(fp):
     return meta, bbox, text
 
 
-def export_frames(video_id, train=True):
-    capture = cv2.VideoCapture(f"data/{video_id}.mp4")
+def export_frames(path, train=True):
+    video_id = path.stem
+    capture = cv2.VideoCapture(str(path))
     cv2.namedWindow(winname="frame")
     fps = capture.get(cv2.CAP_PROP_FPS)
 
@@ -51,7 +52,7 @@ def export_frames(video_id, train=True):
 
             # TODO: filter out frames without speech
             path = (
-                Path("labels")
+                Path("noisy")
                 / label_dir
                 / video_id
                 / fp.stem
@@ -65,4 +66,7 @@ def export_frames(video_id, train=True):
 
 
 if __name__ == "__main__":
-    export_frames(video_id="1BHOflzxPjI", train=False)
+    # export_frames(path=Path("data") / "1BHOflzxPjI.mp4", train=False)
+    video_dir = Path("video")
+    for path in sorted(video_dir.glob("0C5*.mp4")):
+        export_frames(path)

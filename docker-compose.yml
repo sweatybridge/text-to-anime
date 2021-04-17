@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  openface:
+    image: algebr/openface
+    volumes:
+      - ./noisy:/home/openface-build/noisy
+      - ./landmark.sh:/home/openface-build/landmark.sh
+    command:
+      - ./landmark.sh
+      - 0FQXicAGy5U

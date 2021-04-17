@@ -61,7 +61,7 @@ def load_frames(root: Path):
         return pd.read_csv(str(processed))
 
     data = [
-        pd.read_csv(fp, sep=", ").nlargest(1, ["confidence"])
+        pd.read_csv(fp, sep=", ", engine="python").nlargest(1, ["confidence"])
         for fp in sorted(glob(str(root / "frame_*.csv")))
     ]
     df = pd.concat(data)
@@ -90,21 +90,6 @@ def main():
         k = cv2.waitKey(0)
         if k == 27:
             break
-
-
-def postprocess(video_id, train=True):
-    label_dir = "pretrain" if train else "trainval"
-    clean = Path("clean") / label_dir / video_id
-    clean.mkdir(parents=True, exist_ok=True)
-
-    path = Path("labels") / label_dir / video_id
-    for fp in sorted(path.glob("*")):
-        df = load_frames(fp / "processed")
-        invalid = (df["confidence"] < 0.7).sum()
-        print(f"{fp}: {invalid}")
-        if not invalid:
-            cp = (clean / fp.stem).with_suffix(".csv")
-            df.to_csv(str(cp))
 
 
 def update_marker(frame, markers):
