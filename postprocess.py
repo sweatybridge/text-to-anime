@@ -20,6 +20,8 @@ def merge(video_id, train=True):
 
 if __name__ == "__main__":
     # merge(video_id="1BHOflzxPjI", train=False)
-    noisy = Path("noisy") / "pretrain"
-    for path in sorted(noisy.glob("*")):
-        merge(video_id=path.stem)
+    merge(video_id="0GL5r3HVAZ0")
+    # noisy = Path("noisy") / "pretrain"
+    # for path in sorted(noisy.glob("*")):
+    #     merge(video_id=path.stem)
+    #     merge(video_id=path.stem, train=False)

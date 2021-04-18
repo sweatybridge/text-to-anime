@@ -122,4 +122,12 @@ def animate(data):
 
 
 if __name__ == "__main__":
-    main(video_id="1BHOflzxPjI", train=False)
+    # mel = np.load("output_mel.npy")
+    df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
+    norm = normalize(df.iloc[0])[48:].reshape(-1)
+    residual = np.load("output_mel_res.npy")
+    data = (residual.T + norm).T
+    # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
+    # df = pd.read_csv("clean/pretrain/1BHOflzxPjI/00008.csv")
+    # data = np.array([normalize(row)[48:] for _, row in df.iterrows()])
+    animate(data)

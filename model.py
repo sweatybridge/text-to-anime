@@ -649,3 +649,80 @@ class Tacotron2(nn.Module):
         )
 
         return outputs
+
+
+class TextLandmarkModel(nn.Module):
+    def __init__(self, hparams):
+        super(TextLandmarkModel, self).__init__()
+        self.mask_padding = hparams.mask_padding
+        self.fp16_run = hparams.fp16_run
+        self.n_out_channels = hparams.n_mel_channels
+        self.n_frames_per_step = hparams.n_frames_per_step
+        self.embedding = nn.Embedding(hparams.n_symbols, hparams.symbols_embedding_dim)
+        std = sqrt(2.0 / (hparams.n_symbols + hparams.symbols_embedding_dim))
+        val = sqrt(3.0) * std  # uniform bounds for std
+        self.embedding.weight.data.uniform_(-val, val)
+        self.encoder = Encoder(hparams)
+        self.decoder = Decoder(hparams)
+
+        # Initialise with pretrained weights and freeze
+        tacotron2 = torch.hub.load(
+            "nvidia/DeepLearningExamples:torchhub", "nvidia_tacotron2"
+        )
+        self.embedding.weight = tacotron2.embedding.weight
+        self.embedding.weight.requires_grad = False
+
+        self.encoder.load_state_dict(tacotron2.encoder.state_dict())
+        for param in self.encoder.parameters():
+            param.requires_grad = False
+
+    def parse_batch(self, batch):
+        (
+            text_padded,
+            input_lengths,
+            landmarks_padded,
+            gate_padded,
+            output_lengths,
+        ) = batch
+
+        text_padded = to_gpu(text_padded).long()
+        input_lengths = to_gpu(input_lengths).long()
+        max_len = torch.max(input_lengths.data).item()
+        landmarks_padded = to_gpu(landmarks_padded).float()
+        gate_padded = to_gpu(gate_padded).float()
+        output_lengths = to_gpu(output_lengths).long()
+
+        return (
+            (text_padded, input_lengths, landmarks_padded, max_len, output_lengths),
+            (landmarks_padded, gate_padded),
+        )
+
+    def parse_output(self, decoder_outputs, output_lengths):
+        mask = ~get_mask_from_lengths(output_lengths)
+        mask = mask.expand(self.n_out_channels, mask.size(0), mask.size(1))
+        mask = mask.permute(1, 0, 2)
+
+        decoder_outputs[0].data.masked_fill_(mask, 0.0)
+        decoder_outputs[1].data.masked_fill_(mask[:, 0, :], 1e3)  # gate energies
+        return decoder_outputs
+
+    def forward(self, inputs):
+        text_inputs, text_lengths, landmarks, max_len, output_lengths = inputs
+        text_lengths, output_lengths = text_lengths.data, output_lengths.data
+
+        embedded_inputs = self.embedding(text_inputs).transpose(1, 2)
+        encoder_outputs = self.encoder(embedded_inputs, text_lengths)
+        decoder_outputs = self.decoder(encoder_outputs, landmarks, text_lengths)
+
+        outputs = (
+            self.parse_output(decoder_outputs, output_lengths)
+            if self.mask_padding
+            else decoder_outputs
+        )
+        return outputs
+
+    def inference(self, inputs):
+        embedded_inputs = self.embedding(inputs).transpose(1, 2)
+        encoder_outputs = self.encoder.inference(embedded_inputs)
+        decoder_outputs = self.decoder.inference(encoder_outputs)
+        return decoder_outputs
