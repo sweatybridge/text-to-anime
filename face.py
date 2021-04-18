@@ -5,7 +5,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import animation
+from matplotlib import animation, cm
 
 
 def normalize(df):
@@ -92,11 +92,21 @@ def main():
             break
 
 
-def update_marker(frame, markers):
-    markers._offsets3d = (frame[:, 0], frame[:, 1], frame[:, 2])
+def get_bounds(val):
+    return [val.min() - 1, val.max() + 1]
 
 
-def animate(data):
+def update_surface(frame, ax, limits):
+    ax.clear()
+    ax.set_xlim3d(limits[0])
+    ax.set_ylim3d(limits[1])
+    ax.set_zlim3d(limits[2])
+    surf = ax.plot_trisurf(frame[:, 0], frame[:, 1], frame[:, 2], cmap=cm.coolwarm)
+    markers = ax.scatter(frame[:, 0], frame[:, 1], frame[:, 2], marker="o")
+    return surf, markers
+
+
+def animate(data, save=False):
     if len(data.shape) == 2:
         dim = (data.shape[0] // 3, 3, -1)
         data = data.reshape(dim).transpose(2, 0, 1)
@@ -104,8 +114,10 @@ def animate(data):
     print(data[0].shape)
     fig = plt.figure()
     ax = fig.gca(projection="3d")
-    markers = ax.scatter(data[0, :, 0], data[0, :, 1], data[0, :, 2], marker="o")
+    ax.scatter(data[0, :, 0], data[0, :, 1], data[0, :, 2], marker="o")
+    ax.plot_trisurf(data[0, :, 0], data[0, :, 1], data[0, :, 2], cmap=cm.coolwarm)
 
+    limits = [get_bounds(data[:, :, i]) for i in range(3)]
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.view_init(elev=100, azim=-90)
@@ -114,26 +126,30 @@ def animate(data):
     anim = animation.FuncAnimation(
         fig=fig,
         frames=data,
-        func=update_marker,
-        fargs=(markers,),
+        func=update_surface,
+        fargs=(ax, limits),
         interval=40,
     )
-    plt.show()
+    if save:
+        anim.save("landmarks_color.mp4")
+    else:
+        plt.show()
 
 
 def show_ground_truth():
-    df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
+    # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
+    df = pd.read_csv("clean/trainval/0d6iSvF1UmA/00009.csv")
     data = np.empty((len(df), 20, 3))
     for i, row in df.iterrows():
         lips = normalize(row)[48:]
         lips -= lips.mean(axis=0)
         data[i] = lips
-    animate(data)
+    animate(data, save=True)
 
 
-if __name__ == "__main__":
-    # mel = np.load("output_mel.npy")
-    df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
+def main():
+    # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
+    df = pd.read_csv("clean/trainval/0d6iSvF1UmA/00009.csv")
     lips = normalize(df.iloc[0])[48:]
     lips -= lips.mean(axis=0)
     # data = np.array([lips])
@@ -143,4 +159,9 @@ if __name__ == "__main__":
     # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
     # df = pd.read_csv("clean/pretrain/1BHOflzxPjI/00008.csv")
     # data = np.array([normalize(row)[48:] for _, row in df.iterrows()])
-    animate(data)
+    animate(data, save=True)
+
+
+if __name__ == "__main__":
+    # show_ground_truth()
+    main()
