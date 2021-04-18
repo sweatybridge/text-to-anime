@@ -36,6 +36,8 @@ python postprocess.py
 
 ## Training
 
+The `clean` directory contains sample data that have been preprocessed. You may use it to reproduce our model.
+
 ```bash
 python train.py
 ```
