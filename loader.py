@@ -27,16 +27,24 @@ class TextLandmarkLoader(Dataset):
             if speaker not in self.speaker_embedding:
                 self.speaker_embedding[speaker] = []
             df = pd.read_csv(str(path)).iloc[0]
-            norm = normalize(df)[48:].reshape(-1)
+            norm = self.normalize_landmarks(df)
             self.speaker_embedding[speaker].append(norm)
         for k, v in self.speaker_embedding.items():
             self.speaker_embedding[k] = np.mean(v, axis=0)
         self.text_cleaners = ["english_cleaners"]
 
+    def normalize_landmarks(self, df, video_id=None):
+        lips = normalize(df)[48:]
+        lips -= lips.mean(axis=0)
+        result = lips.reshape(-1)
+        if video_id is not None:
+            result -= self.speaker_embedding[video_id]
+        return result
+
     def get_landmarks(self, path):
-        speaker = self.speaker_embedding[path.parent.stem]
+        video_id = path.parent.stem
         df = pd.read_csv(str(path))
-        norm = [normalize(row)[48:].reshape(-1) - speaker for _, row in df.iterrows()]
+        norm = [self.normalize_landmarks(row, video_id) for _, row in df.iterrows()]
         return torch.FloatTensor(norm).t()
 
     def get_text(self, path):

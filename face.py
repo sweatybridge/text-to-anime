@@ -121,11 +121,24 @@ def animate(data):
     plt.show()
 
 
+def show_ground_truth():
+    df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
+    data = np.empty((len(df), 20, 3))
+    for i, row in df.iterrows():
+        lips = normalize(row)[48:]
+        lips -= lips.mean(axis=0)
+        data[i] = lips
+    animate(data)
+
+
 if __name__ == "__main__":
     # mel = np.load("output_mel.npy")
     df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
-    norm = normalize(df.iloc[0])[48:].reshape(-1)
-    residual = np.load("output_mel_res.npy")
+    lips = normalize(df.iloc[0])[48:]
+    lips -= lips.mean(axis=0)
+    # data = np.array([lips])
+    norm = lips.reshape(-1)
+    residual = np.load("output_post_res.npy")
     data = (residual.T + norm).T
     # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
     # df = pd.read_csv("clean/pretrain/1BHOflzxPjI/00008.csv")
