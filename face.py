@@ -92,8 +92,95 @@ def main():
             break
 
 
+def get_jaw(val):
+    return val[:17]
+
+
+def get_left_eye(val):
+    eye = np.zeros(shape=(7, 3))
+    eye[:6, :] = val[36:42]
+    eye[6, :] = val[36]
+    return eye
+
+
+def get_left_brow(val):
+    return val[17:22]
+
+
+def get_right_eye(val):
+    eye = np.zeros(shape=(7, 3))
+    eye[:6, :] = val[42:48]
+    eye[6, :] = val[42]
+    return eye
+
+
+def get_right_brow(val):
+    return val[22:27]
+
+
+def get_nose(val):
+    nose = np.zeros(shape=(10, 3))
+    nose[:9, :] = val[27:36]
+    nose[9, :] = val[30]
+    return nose
+
+
+def get_upper_lip(val):
+    lip = np.zeros(shape=(13, 3))
+    lip[:7, :] = val[48:55]
+    lip[7:12, :] = np.flip(val[60:65], axis=0)
+    lip[12, :] = val[48]
+    return lip
+
+
+def get_lower_lip(val):
+    lip = np.zeros(shape=(11, 3))
+    lip[:6, :] = val[54:60]
+    lip[6, :] = val[48]
+    lip[7:10, :] = np.flip(val[65:], axis=0)
+    lip[10, :] = val[54]
+    return lip
+
+
+def get_face(val):
+    return [
+        get_jaw(val),
+        get_left_brow(val),
+        get_left_eye(val),
+        get_right_brow(val),
+        get_right_eye(val),
+        get_nose(val),
+        get_upper_lip(val),
+        get_lower_lip(val),
+    ]
+
+
 def get_bounds(val):
     return [val.min() - 1, val.max() + 1]
+
+
+def snapshot(data):
+    if len(data.shape) == 2:
+        dim = (data.shape[0] // 3, 3, -1)
+        data = data.reshape(dim).transpose(2, 0, 1)
+
+    fig = plt.figure()
+    ax = fig.gca(projection="3d")
+    # ax.scatter(data[0, :, 0], data[0, :, 1], data[0, :, 2], marker="o")
+    # ax.plot_trisurf(data[0, :, 0], data[0, :, 1], data[0, :, 2], cmap=cm.coolwarm)
+    for line in get_face(data[0]):
+        ax.plot(line[:, 0], line[:, 1], line[:, 2], color="C0")
+
+    limits = [get_bounds(data[0, :, i]) for i in range(3)]
+    ax.set_xlim3d(limits[0])
+    ax.set_ylim3d(limits[1])
+    ax.set_zlim3d(limits[2])
+
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.view_init(elev=100, azim=-90)
+    plt.tight_layout()
+    plt.show()
 
 
 def update_surface(frame, ax, limits):
@@ -101,9 +188,15 @@ def update_surface(frame, ax, limits):
     ax.set_xlim3d(limits[0])
     ax.set_ylim3d(limits[1])
     ax.set_zlim3d(limits[2])
-    surf = ax.plot_trisurf(frame[:, 0], frame[:, 1], frame[:, 2], cmap=cm.coolwarm)
-    markers = ax.scatter(frame[:, 0], frame[:, 1], frame[:, 2], marker="o")
-    return surf, markers
+    # surf = ax.plot_trisurf(frame[:, 0], frame[:, 1], frame[:, 2], cmap=cm.coolwarm)
+    # markers = ax.scatter(frame[:, 0], frame[:, 1], frame[:, 2], marker="o")
+    # return surf, markers
+    markers = [
+        ax.plot(line[:, 0], line[:, 1], line[:, 2], color="C0" if i < 6 else "C3")
+        for i, line in enumerate(get_face(frame))
+    ]
+    # markers = ax.plot(frame[48:, 0], frame[48:, 1], frame[48:, 2])
+    return markers
 
 
 def animate(data, save=False):
@@ -114,10 +207,10 @@ def animate(data, save=False):
     print(data[0].shape)
     fig = plt.figure()
     ax = fig.gca(projection="3d")
-    ax.scatter(data[0, :, 0], data[0, :, 1], data[0, :, 2], marker="o")
-    ax.plot_trisurf(data[0, :, 0], data[0, :, 1], data[0, :, 2], cmap=cm.coolwarm)
+    limits = [get_bounds(data[:, 48:, i]) for i in range(3)]
+    # limits[1][0] -= 10
+    # limits[1][1] += 10
 
-    limits = [get_bounds(data[:, :, i]) for i in range(3)]
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.view_init(elev=100, azim=-90)
@@ -131,7 +224,7 @@ def animate(data, save=False):
         interval=40,
     )
     if save:
-        anim.save("landmarks_color.mp4")
+        anim.save("landmarks_68.mp4")
     else:
         plt.show()
 
@@ -139,9 +232,9 @@ def animate(data, save=False):
 def show_ground_truth():
     # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
     df = pd.read_csv("clean/trainval/0d6iSvF1UmA/00009.csv")
-    data = np.empty((len(df), 20, 3))
+    data = np.empty((len(df), 68, 3))
     for i, row in df.iterrows():
-        lips = normalize(row)[48:]
+        lips = normalize(row)
         lips -= lips.mean(axis=0)
         data[i] = lips
     animate(data, save=True)
@@ -150,16 +243,22 @@ def show_ground_truth():
 def main():
     # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
     df = pd.read_csv("clean/trainval/0d6iSvF1UmA/00009.csv")
-    lips = normalize(df.iloc[0])[48:]
+    lips = normalize(df.iloc[0])
     lips -= lips.mean(axis=0)
     # data = np.array([lips])
     norm = lips.reshape(-1)
-    residual = np.load("output_post_res.npy")
-    data = (residual.T + norm).T
+
+    residual = np.load("output_0d6iSvF1UmA_hello_mel.npy")
+    data = np.zeros(shape=(residual.shape[1], norm.shape[0]))
+    for i in range(data.shape[0]):
+        data[i, :] = norm
+    data[:, 144:] += residual.T
+    # residual = np.load("output_0d6iSvF1UmA_68_mel.npy")
+    # data = residual.T + norm
     # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
     # df = pd.read_csv("clean/pretrain/1BHOflzxPjI/00008.csv")
     # data = np.array([normalize(row)[48:] for _, row in df.iterrows()])
-    animate(data, save=True)
+    animate(data.T, save=True)
 
 
 if __name__ == "__main__":
