@@ -255,9 +255,6 @@ def main():
     data[:, 144:] += residual.T
     # residual = np.load("output_0d6iSvF1UmA_68_mel.npy")
     # data = residual.T + norm
-    # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
-    # df = pd.read_csv("clean/pretrain/1BHOflzxPjI/00008.csv")
-    # data = np.array([normalize(row)[48:] for _, row in df.iterrows()])
     animate(data.T, save=True)
 
 

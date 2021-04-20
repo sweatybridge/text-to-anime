@@ -70,4 +70,4 @@ if __name__ == "__main__":
     video_dir = Path("video")
     for path in sorted(video_dir.glob("*.mp4")):
         export_frames(path)
-        # export_frames(path, train=False)
+        export_frames(path, train=False)

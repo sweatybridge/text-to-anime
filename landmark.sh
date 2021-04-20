@@ -9,7 +9,7 @@ do
     ./build/bin/FaceLandmarkImg -fdir $dir -out_dir $dir/processed -3Dfp -pose
 done
 
-# for dir in ./noisy/trainval/$1/*
-# do
-#     ./build/bin/FaceLandmarkImg -fdir $dir -out_dir $dir/processed -3Dfp -pose
-# done
+for dir in ./noisy/trainval/$1/*
+do
+    ./build/bin/FaceLandmarkImg -fdir $dir -out_dir $dir/processed -3Dfp -pose
+done

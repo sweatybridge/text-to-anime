@@ -41,3 +41,12 @@ The `clean` directory contains sample data that have been preprocessed. You may 
 ```bash
 python train.py
 ```
+
+## Inference
+
+1. Call the model with text input and save the numpy array returned (see `text_to_anime.ipynb` notebook for an example)
+2. Combine the output displacement trajectories with a reference frame to generate facial landmarks.
+
+```bash
+python face.py
+```

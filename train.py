@@ -229,7 +229,15 @@ def main(hparams, checkpoint_path=None):
 
 
 if __name__ == "__main__":
-    hparams = HParams(batch_size=1)
+    hparams = HParams(
+        n_mel_channels=60,
+        max_decoder_steps=240,
+        epochs=50,
+        iters_per_checkpoint=45,
+        learning_rate=2e-3,
+        batch_size=8,
+        fp16_run=True
+    )
 
     torch.backends.cudnn.enabled = hparams.cudnn_enabled
     torch.backends.cudnn.benchmark = hparams.cudnn_benchmark
