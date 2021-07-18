@@ -33,12 +33,32 @@ def render(train, val, title):
     plt.show()
 
 
-def main():
+def compare(train, title, legend):
+    for data in train:
+        plt.plot([i + 1 for i in range(len(data))], data)
+
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.xlim(left=0)
+    plt.ylim(bottom=0)
+    plt.title(title)
+    plt.legend(legend)
+    plt.tight_layout()
+    plt.show()
+
+
+def lips_vs_full():
     train, val = read_loss("report/loss_all.txt")
     render(train, val, "Model A (68 landmarks)")
     train, val = read_loss("report/loss_lips.txt")
     render(train, val, "Model B (lips only)")
 
 
+def pretrain_vs_no():
+    train, val = read_loss("loss_60.txt")
+    train_p, val_p = read_loss("loss_60_pretrain.txt")
+    compare([train, train_p], "Train loss (lips only)", ["No Pretrain", "Pretrain"])
+    compare([val, val_p], "Val loss (lips only)", ["No Pretrain", "Pretrain"])
+
 if __name__ == "__main__":
-    main()
+    lips_vs_full()
