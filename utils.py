@@ -33,6 +33,7 @@ class HParams:
     cudnn_enabled: bool = True
     cudnn_benchmark: bool = False
     ignore_layers: List[str] = field(default_factory=lambda: ["embedding.weight"])
+    pretrain: bool = True
     ################################
     # Data Parameters             #
     ################################

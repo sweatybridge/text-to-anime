@@ -8,7 +8,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from loader import TextLandmarkCollate, TextLandmarkLoader
-from model import Tacotron2, TextLandmarkModel
+from model import TextLandmarkModel
 from utils import HParams
 
 
@@ -119,17 +119,7 @@ def main(hparams, checkpoint_path=None):
     torch.cuda.manual_seed(hparams.seed)
 
     # Initialise model with pretrained weights and freeze
-    # model = TextLandmarkModel(hparams).cuda()
-    model = Tacotron2(hparams).cuda()
-    pretrained = torch.hub.load(
-        "nvidia/DeepLearningExamples:torchhub", "nvidia_tacotron2"
-    ).cuda()
-    model.embedding.weight = pretrained.embedding.weight
-    model.embedding.weight.requires_grad = False
-
-    model.encoder.load_state_dict(pretrained.encoder.state_dict())
-    for param in model.encoder.parameters():
-        param.requires_grad = False
+    model = TextLandmarkModel(hparams).cuda()
 
     if hparams.fp16_run:
         model.decoder.attention_layer.score_mask_value = np.finfo("float16").min
@@ -165,7 +155,7 @@ def main(hparams, checkpoint_path=None):
         epochs=hparams.epochs,
     )
     scaler = torch.cuda.amp.GradScaler(enabled=hparams.fp16_run)
-    criterion = Tacotron2Loss()
+    criterion = TextLandmarkLoss()
 
     if checkpoint_path is not None:
         best, iteration = load_checkpoint(
