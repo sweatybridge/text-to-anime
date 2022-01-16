@@ -36,7 +36,7 @@ class TextLandmarkLoss(nn.Module):
     def __init__(self):
         super().__init__()
         self.mse = nn.MSELoss()
-        self.bce = nn.BCEWithLogitsLoss()
+        self.bce = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(10.0))
 
     def forward(self, model_output, targets):
         mel_target, gate_target = targets[0], targets[1]
@@ -226,7 +226,7 @@ if __name__ == "__main__":
         iters_per_checkpoint=45,
         learning_rate=2e-3,
         batch_size=8,
-        fp16_run=True
+        fp16_run=True,
     )
 
     torch.backends.cudnn.enabled = hparams.cudnn_enabled
