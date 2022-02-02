@@ -5,7 +5,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import animation, cm
+from matplotlib.animation import Animation, FuncAnimation
 
 
 def normalize(df):
@@ -199,7 +199,7 @@ def update_surface(frame, ax, limits):
     return markers
 
 
-def create_anime(data: np.ndarray) -> animation.Animation:
+def create_anime(data: np.ndarray) -> Animation:
     if len(data.shape) == 2:
         dim = (data.shape[0] // 3, 3, -1)
         data = data.reshape(dim).transpose(2, 0, 1)
@@ -216,7 +216,7 @@ def create_anime(data: np.ndarray) -> animation.Animation:
     ax.view_init(elev=100, azim=-90)
     plt.tight_layout()
 
-    return animation.FuncAnimation(
+    return FuncAnimation(
         fig=fig,
         frames=data,
         func=update_surface,
@@ -242,24 +242,6 @@ def show_ground_truth():
         lips -= lips.mean(axis=0)
         data[i] = lips
     animate(data, save=True)
-
-
-def main():
-    # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
-    df = pd.read_csv("clean/trainval/0d6iSvF1UmA/00009.csv")
-    lips = normalize(df.iloc[0])
-    lips -= lips.mean(axis=0)
-    # data = np.array([lips])
-    norm = lips.reshape(-1)
-
-    residual = np.load("output_0d6iSvF1UmA_hello_mel.npy")
-    data = np.zeros(shape=(residual.shape[1], norm.shape[0]))
-    for i in range(data.shape[0]):
-        data[i, :] = norm
-    data[:, 144:] += residual.T
-    # residual = np.load("output_0d6iSvF1UmA_68_mel.npy")
-    # data = residual.T + norm
-    animate(data.T, save=True)
 
 
 if __name__ == "__main__":

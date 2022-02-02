@@ -56,9 +56,10 @@ python train.py
 
 ## Inference
 
-1. Call the model with text input and save the numpy array returned (see `text_to_anime.ipynb` notebook for an example)
-2. Combine the output displacement trajectories with a reference frame to generate facial landmarks.
+Call the model with text input.
 
 ```bash
-python face.py
+python score.py --text "Hello World!"
 ```
+
+Video will be saved as `output/line_0.mp4`.

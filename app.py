@@ -1,42 +1,28 @@
-from typing import Optional
+from pathlib import Path
+from typing import Tuple
 
 import numpy as np
-import pandas as pd
 import streamlit as st
-import torch
 
-from face import create_anime, normalize
+from face import create_anime
 from model import Tacotron2
-from text import text_to_sequence
-from utils import HParams
+from score import load_lips, load_model, predict
 
 
 @st.cache
-def load_model(path: str) -> torch.nn.Module:
-    # xyz coordinates * 20 lip landmarks, 8 seconds * 30 fps
-    model = Tacotron2(HParams(n_mel_channels=60, max_decoder_steps=240))
-    if torch.cuda.is_available():
-        model = model.cuda()
-    checkpoint = torch.load(path, map_location="cpu")
-    model.load_state_dict(checkpoint["state_dict"])
-    return model
+def init(artefact: Path) -> Tuple[Tacotron2, np.ndarray]:
+    model = load_model(artefact / "best-lips.pt")
+    lips_path = artefact / "lips.csv"
+    if lips_path.exists():
+        lips = np.genfromtxt(lips_path)
+    else:
+        lips = load_lips(artefact / "face.csv")
+    return model, lips
 
 
-@st.cache
-def load_face(path: Optional[str] = None) -> np.ndarray:
-    if not path:
-        return np.genfromtxt("artefact/face.csv")
-    # Load base facial landmarks
-    df = pd.read_csv(path)
-    lips = normalize(df.iloc[0])
-    lips -= lips.mean(axis=0)
-    return lips.reshape(-1)
-
-
-def main():
+def main() -> None:
     st.title("Text to lip movements")
-    model = load_model("artefact/best-lips.pt")
-    face = load_face()
+    model, lips = init(Path("artefact"))
     text = st.text_input(
         "Enter a short phrase or sentence:",
         max_chars=140,
@@ -45,21 +31,9 @@ def main():
     if not text:
         return
     with st.spinner("Running model inference..."):
-        # Convert input text to embeddings
-        sequence = text_to_sequence(text, ["english_cleaners"])
-        sequence = torch.IntTensor(sequence)[None, :].long()
-        if torch.cuda.is_available():
-            sequence = sequence.cuda()
-        mel_outputs = model.inference(sequence)[0]
+        data = predict(model, lips, text)
     with st.spinner("Rendering output video..."):
-        # Animate lips only
-        residual = mel_outputs.float().data.cpu().numpy()[0]
-        data = np.zeros(shape=(residual.shape[1], face.shape[0]))
-        for i in range(data.shape[0]):
-            data[i, :] = face
-        data[:, 144:] += residual.T
         anime = create_anime(data.T)
-        # Render output video
         video = anime.to_html5_video()
     st.write(video, unsafe_allow_html=True)
 
