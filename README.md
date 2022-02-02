@@ -4,10 +4,13 @@ Convert text and audio to facial expressions
 
 ## Web App
 
+```bash
+pip install -r requirements.txt
+```
+
 - Save trained model to `artefact/best-lips.pt`
 
 ```bash
-pip install -r requirements.txt
 streamlit run app.py
 ```
 
