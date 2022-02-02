@@ -10,13 +10,9 @@ from score import load_lips, load_model, predict
 
 
 @st.cache
-def init(artefact: Path) -> Tuple[Tacotron2, np.ndarray]:
-    model = load_model(artefact / "best-lips.pt")
-    lips_path = artefact / "lips.csv"
-    if lips_path.exists():
-        lips = np.genfromtxt(lips_path)
-    else:
-        lips = load_lips(artefact / "face.csv")
+def init() -> Tuple[Tacotron2, np.ndarray]:
+    model = load_model(Path("artefact/best-lips.pt"))
+    lips = load_lips(Path("clean/trainval/0d6iSvF1UmA/00009.csv"))
     return model, lips
 
 

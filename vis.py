@@ -1,9 +1,7 @@
 from glob import glob
-from io import StringIO
 from pathlib import Path
 
 import cv2
-import pandas as pd
 
 from preprocess import parse_data
 
