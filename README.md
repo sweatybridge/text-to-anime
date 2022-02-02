@@ -56,10 +56,10 @@ python train.py
 
 ## Inference
 
-Call the model with text input.
+Call trained model with text input.
 
 ```bash
 python score.py --text "Hello World!"
 ```
 
-Video will be saved as `output/line_0.mp4`.
+Video will be saved as `output/line_0.mp4`

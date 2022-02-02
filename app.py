@@ -18,7 +18,7 @@ def init() -> Tuple[Tacotron2, np.ndarray]:
 
 def main() -> None:
     st.title("Text to lip movements")
-    model, lips = init(Path("artefact"))
+    model, lips = init()
     text = st.text_input(
         "Enter a short phrase or sentence:",
         max_chars=140,
