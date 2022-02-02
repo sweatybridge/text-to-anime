@@ -199,7 +199,7 @@ def update_surface(frame, ax, limits):
     return markers
 
 
-def animate(data, save=False):
+def create_anime(data: np.ndarray) -> animation.Animation:
     if len(data.shape) == 2:
         dim = (data.shape[0] // 3, 3, -1)
         data = data.reshape(dim).transpose(2, 0, 1)
@@ -216,13 +216,17 @@ def animate(data, save=False):
     ax.view_init(elev=100, azim=-90)
     plt.tight_layout()
 
-    anim = animation.FuncAnimation(
+    return animation.FuncAnimation(
         fig=fig,
         frames=data,
         func=update_surface,
         fargs=(ax, limits),
         interval=40,
     )
+
+
+def animate(data, save=False):
+    anim = create_anime(data)
     if save:
         anim.save("landmarks_68.mp4")
     else:

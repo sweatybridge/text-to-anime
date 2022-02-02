@@ -2,6 +2,15 @@
 
 Convert text and audio to facial expressions
 
+## Web App
+
+- Save trained model to `artefact/best-lips.pt`
+
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
+
 ## Data preparation
 
 1. Download [LRS3 dataset](https://www.robots.ox.ac.uk/~vgg/data/lip_reading/lrs3.html) to `lrs3_v0.4` directory

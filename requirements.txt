@@ -6,3 +6,4 @@ torch
 inflect
 unidecode
 #tensorboard
+streamlit
