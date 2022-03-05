@@ -668,13 +668,19 @@ class TextLandmarkModel(nn.Module):
         # Initialise with pretrained weights and freeze
         if hparams.pretrain:
             tacotron2 = torch.hub.load(
-                "nvidia/DeepLearningExamples:torchhub", "nvidia_tacotron2"
+                repo_or_dir="nvidia/DeepLearningExamples:torchhub",
+                model="nvidia_tacotron2",
             )
             self.embedding.weight = tacotron2.embedding.weight
             self.embedding.weight.requires_grad = False
-
+            # Freeze encoder weights
             self.encoder.load_state_dict(tacotron2.encoder.state_dict())
             for param in self.encoder.parameters():
+                param.requires_grad = False
+            # Freeze gate weights
+            gate_weights = tacotron2.decoder.gate_layer.state_dict()
+            self.decoder.gate_layer.load_state_dict(gate_weights)
+            for param in self.decoder.gate_layer.parameters():
                 param.requires_grad = False
 
     def parse_batch(self, batch):
