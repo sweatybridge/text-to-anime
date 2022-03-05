@@ -2,8 +2,9 @@ opencv-python
 matplotlib
 pandas
 torch
-#eos-py
+# eos-py
 inflect
 unidecode
-#tensorboard
+# tensorboard
 streamlit
+# librosa

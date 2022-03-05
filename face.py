@@ -161,9 +161,8 @@ def get_bounds(val):
 
 def snapshot(data):
     if len(data.shape) == 2:
-        dim = (data.shape[0] // 3, 3, -1)
-        data = data.reshape(dim).transpose(2, 0, 1)
-
+        shape = (data.shape[0], data.shape[1] // 3, 3)
+        data = data.reshape(shape)
     fig = plt.figure()
     ax = fig.gca(projection="3d")
     # ax.scatter(data[0, :, 0], data[0, :, 1], data[0, :, 2], marker="o")
@@ -201,10 +200,10 @@ def update_surface(frame, ax, limits):
 
 def create_anime(data: np.ndarray) -> Animation:
     if len(data.shape) == 2:
-        dim = (data.shape[0] // 3, 3, -1)
-        data = data.reshape(dim).transpose(2, 0, 1)
-
-    print(data[0].shape)
+        shape = (data.shape[0], data.shape[1] // 3, 3)
+        data = data.reshape(shape)
+    # Expected input shape: (n, 68, 3)
+    print(f"Input shape: {data.shape}")
     fig = plt.figure()
     ax = fig.gca(projection="3d")
     limits = [get_bounds(data[:, 48:, i]) for i in range(3)]

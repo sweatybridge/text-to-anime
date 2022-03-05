@@ -7,14 +7,15 @@ import pandas as pd
 import torch
 
 from face import create_anime, normalize
-from model import Tacotron2
+from model import TextLandmarkModel
 from text import text_to_sequence
 from utils import HParams
 
 
-def load_model(path: Path) -> Tacotron2:
+def load_model(path: Path) -> TextLandmarkModel:
     # xyz coordinates * 20 lip landmarks, 8 seconds * 30 fps
-    model = Tacotron2(HParams(n_mel_channels=60, max_decoder_steps=240))
+    params = HParams(n_mel_channels=60, max_decoder_steps=240, pretrain=False)
+    model = TextLandmarkModel(params)
     if torch.cuda.is_available():
         model = model.cuda()
     checkpoint = torch.load(path, map_location="cpu")
@@ -30,7 +31,7 @@ def load_lips(path: Path) -> np.ndarray:
     return lips.reshape(-1)
 
 
-def predict(model: Tacotron2, face: np.ndarray, text: str) -> np.ndarray:
+def predict(model: TextLandmarkModel, face: np.ndarray, text: str) -> np.ndarray:
     # Convert input text to embeddings
     sequence = text_to_sequence(text, ["english_cleaners"])
     sequence = torch.IntTensor(sequence)[None, :].long()
@@ -43,7 +44,7 @@ def predict(model: Tacotron2, face: np.ndarray, text: str) -> np.ndarray:
     for i in range(data.shape[0]):
         data[i, :] = face
     data[:, 144:] += residual.T
-    return data.T
+    return data
 
 
 def main(

@@ -9,6 +9,7 @@ pip install -r requirements.txt
 ```
 
 - Save trained model to `artefact/best-lips.pt`
+- [M1] Comment out all references to librosa
 
 ```bash
 streamlit run app.py
