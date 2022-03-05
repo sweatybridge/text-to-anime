@@ -182,7 +182,7 @@ def main(hparams, checkpoint_path=None):
 if __name__ == "__main__":
     hparams = HParams(
         n_mel_channels=60,
-        max_decoder_steps=240,
+        # max_decoder_steps=240,
         epochs=50,
         iters_per_checkpoint=45,
         learning_rate=2e-3,

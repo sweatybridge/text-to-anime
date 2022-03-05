@@ -220,7 +220,7 @@ def create_anime(data: np.ndarray) -> Animation:
         frames=data,
         func=update_surface,
         fargs=(ax, limits),
-        interval=40,
+        interval=13,
     )
 
 

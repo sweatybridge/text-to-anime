@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List
 
-import numpy as np
 import torch
 
 from text import symbols

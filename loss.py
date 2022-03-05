@@ -69,8 +69,8 @@ class Tacotron2Loss(nn.Module):
 class TextLandmarkLoss(nn.Module):
     def __init__(self):
         super().__init__()
-        self.sl1 = nn.SmoothL1Loss()
-        self.bce = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(10.0))
+        self.mse = nn.SmoothL1Loss()
+        self.bce = nn.BCEWithLogitsLoss()
 
     def forward(self, model_output, targets):
         mel_target, gate_target = targets[0], targets[1]
@@ -80,7 +80,7 @@ class TextLandmarkLoss(nn.Module):
 
         mel_out, gate_out, _ = model_output
         gate_out = gate_out.view(-1, 1)
-        mel_loss = self.sl1(mel_out, mel_target)
+        mel_loss = self.mse(mel_out, mel_target)
         gate_loss = self.bce(gate_out, gate_target)
         return mel_loss + gate_loss
 

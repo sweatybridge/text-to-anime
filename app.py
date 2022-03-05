@@ -31,6 +31,7 @@ def main() -> None:
     with st.spinner("Rendering output video..."):
         anime = create_anime(data)
         video = anime.to_html5_video()
+    # FIXME: video doesn't reload when input text changes
     st.write(video, unsafe_allow_html=True)
 
 
