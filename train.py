@@ -4,51 +4,12 @@ import time
 
 import numpy as np
 import torch
-from torch import nn
 from torch.utils.data import DataLoader
 
 from loader import TextLandmarkCollate, TextLandmarkLoader
+from loss import TextLandmarkLoss
 from model import TextLandmarkModel
 from utils import HParams
-
-
-class Tacotron2Loss(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.mse = nn.MSELoss()
-        self.bce = nn.BCEWithLogitsLoss()
-
-    def forward(self, model_output, targets):
-        mel_target, gate_target = targets[0], targets[1]
-        mel_target.requires_grad = False
-        gate_target.requires_grad = False
-        gate_target = gate_target.view(-1, 1)
-
-        mel_out, mel_out_postnet, gate_out, _ = model_output
-        gate_out = gate_out.view(-1, 1)
-        mel_loss = self.mse(mel_out, mel_target)
-        post_loss = self.mse(mel_out_postnet, mel_target)
-        gate_loss = self.bce(gate_out, gate_target)
-        return mel_loss + post_loss + gate_loss
-
-
-class TextLandmarkLoss(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.mse = nn.MSELoss()
-        self.bce = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(10.0))
-
-    def forward(self, model_output, targets):
-        mel_target, gate_target = targets[0], targets[1]
-        mel_target.requires_grad = False
-        gate_target.requires_grad = False
-        gate_target = gate_target.view(-1, 1)
-
-        mel_out, gate_out, _ = model_output
-        gate_out = gate_out.view(-1, 1)
-        mel_loss = self.mse(mel_out, mel_target)
-        gate_loss = self.bce(gate_out, gate_target)
-        return mel_loss + gate_loss
 
 
 def load_checkpoint(checkpoint_path, model, optimizer, scaler, scheduler):
