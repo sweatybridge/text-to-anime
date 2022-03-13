@@ -1,3 +1,4 @@
+from dataclasses import replace
 from math import sqrt
 
 import torch
@@ -5,7 +6,7 @@ from torch import nn
 from torch.autograd import Variable
 from torch.nn import functional as F
 
-from utils import get_mask_from_lengths, to_gpu
+from utils import HParams, get_mask_from_lengths, to_gpu
 
 
 class LinearNorm(torch.nn.Module):
@@ -576,6 +577,46 @@ class Decoder(nn.Module):
         return mel_outputs, gate_outputs, alignments
 
 
+class LandmarkDecoder(nn.Module):
+    def __init__(self, hparams: HParams):
+        super(LandmarkDecoder, self).__init__()
+        self.xyz = Decoder(replace(hparams, n_mel_channels=hparams.n_landmark_xyz))
+        self.mel = Decoder(hparams)
+
+    def forward(self, memory, landmarks, memory_lengths):
+        return self.xyz(memory, landmarks, memory_lengths)
+
+    def inference(self, memory):
+        xyz_input = self.xyz.get_go_frame(memory)
+        self.xyz.initialize_decoder_states(memory, mask=None)
+
+        mel_input = self.mel.get_go_frame(memory)
+        self.mel.initialize_decoder_states(memory, mask=None)
+
+        xyz_outputs, gate_outputs, alignments = [], [], []
+        while True:
+            xyz_input = self.xyz.prenet(xyz_input)
+            xyz_output, _, alignment = self.xyz.decode(xyz_input)
+
+            mel_input = self.mel.prenet(mel_input)
+            mel_output, gate_output, _ = self.mel.decode(mel_input)
+
+            xyz_outputs.append(xyz_output.squeeze(1))
+            gate_outputs.append(gate_output)
+            alignments.append(alignment)
+
+            if torch.sigmoid(gate_output.data) > self.mel.gate_threshold:
+                break
+            elif len(xyz_outputs) == self.xyz.max_decoder_steps:
+                print("Warning! Reached max decoder steps")
+                break
+
+            xyz_input = xyz_output
+            mel_input = mel_output
+
+        return self.xyz.parse_decoder_outputs(xyz_outputs, gate_outputs, alignments)
+
+
 class Tacotron2(nn.Module):
     def __init__(self, hparams):
         super(Tacotron2, self).__init__()
@@ -652,18 +693,18 @@ class Tacotron2(nn.Module):
 
 
 class TextLandmarkModel(nn.Module):
-    def __init__(self, hparams):
+    def __init__(self, hparams: HParams):
         super(TextLandmarkModel, self).__init__()
         self.mask_padding = hparams.mask_padding
         self.fp16_run = hparams.fp16_run
-        self.n_out_channels = hparams.n_mel_channels
+        self.n_out_channels = hparams.n_landmark_xyz
         self.n_frames_per_step = hparams.n_frames_per_step
         self.embedding = nn.Embedding(hparams.n_symbols, hparams.symbols_embedding_dim)
         std = sqrt(2.0 / (hparams.n_symbols + hparams.symbols_embedding_dim))
         val = sqrt(3.0) * std  # uniform bounds for std
         self.embedding.weight.data.uniform_(-val, val)
         self.encoder = Encoder(hparams)
-        self.decoder = Decoder(hparams)
+        self.decoder = LandmarkDecoder(hparams)
 
         # Initialise with pretrained weights and freeze
         if hparams.pretrain:
@@ -677,10 +718,11 @@ class TextLandmarkModel(nn.Module):
             self.encoder.load_state_dict(tacotron2.encoder.state_dict())
             for param in self.encoder.parameters():
                 param.requires_grad = False
-            # Freeze gate weights
-            gate_weights = tacotron2.decoder.gate_layer.state_dict()
-            self.decoder.gate_layer.load_state_dict(gate_weights)
-            for param in self.decoder.gate_layer.parameters():
+            self.decoder.mel.load_state_dict(tacotron2.decoder.state_dict())
+            for param in self.decoder.mel.parameters():
+                param.requires_grad = False
+            # Freeze unused layer weights
+            for param in self.decoder.xyz.gate_layer.parameters():
                 param.requires_grad = False
 
     def parse_batch(self, batch):

@@ -42,7 +42,9 @@ class HParams:
     ################################
     # Landmark Parameters          #
     ################################
-    n_mel_channels: int = 204
+    n_mel_channels: int = 80
+    n_landmark_xyz: int = 204
+    target_fps: int = 80  # currently only 80 fps is supported
     ################################
     # Model Parameters             #
     ################################

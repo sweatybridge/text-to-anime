@@ -83,7 +83,8 @@ def main(hparams, checkpoint_path=None):
     model = TextLandmarkModel(hparams).cuda()
 
     if hparams.fp16_run:
-        model.decoder.attention_layer.score_mask_value = np.finfo("float16").min
+        model.decoder.xyz.attention_layer.score_mask_value = np.finfo("float16").min
+        model.decoder.mel.attention_layer.score_mask_value = np.finfo("float16").min
 
     # Setup data loaders
     trainset = TextLandmarkLoader()
@@ -181,7 +182,7 @@ def main(hparams, checkpoint_path=None):
 
 if __name__ == "__main__":
     hparams = HParams(
-        n_mel_channels=60,
+        n_landmark_xyz=60,
         # max_decoder_steps=240,
         epochs=50,
         iters_per_checkpoint=45,

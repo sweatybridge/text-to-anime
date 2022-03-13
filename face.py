@@ -224,14 +224,6 @@ def create_anime(data: np.ndarray) -> Animation:
     )
 
 
-def animate(data, save=False):
-    anim = create_anime(data)
-    if save:
-        anim.save("landmarks_68.mp4")
-    else:
-        plt.show()
-
-
 def show_ground_truth():
     # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
     df = pd.read_csv("clean/trainval/0d6iSvF1UmA/00009.csv")
@@ -240,9 +232,21 @@ def show_ground_truth():
         lips = normalize(row)
         lips -= lips.mean(axis=0)
         data[i] = lips
-    animate(data, save=True)
+    # Interpolate to 12.5 ms frame hop (ie. 80 fps)
+    xp = np.arange(data.shape[0]) / 30 * 80
+    frames = int(data.shape[0] / 30 * 80)
+    xs = np.arange(frames)
+    interpolated = np.zeros(shape=(frames, data.shape[1], data.shape[2]))
+    for i in range(data.shape[1]):
+        interpolated[:, i, 0] = np.interp(xs, xp, data[:, i, 0])
+        interpolated[:, i, 1] = np.interp(xs, xp, data[:, i, 1])
+        interpolated[:, i, 2] = np.interp(xs, xp, data[:, i, 2])
+        # print(data[:, i, 0], interpolated[:, i, 0])
+    anim = create_anime(interpolated)
+    anim.save("landmarks_68.mp4")
+    # plt.show()
 
 
 if __name__ == "__main__":
-    # show_ground_truth()
-    main()
+    show_ground_truth()
+    # main()

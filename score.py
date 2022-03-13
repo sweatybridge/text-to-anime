@@ -13,9 +13,8 @@ from utils import HParams
 
 
 def load_model(path: Path) -> TextLandmarkModel:
-    # xyz coordinates * 20 lip landmarks, 8 seconds * 30 fps
-    # params = HParams(n_mel_channels=60, max_decoder_steps=240, pretrain=False)
-    params = HParams(n_mel_channels=60, pretrain=False)
+    # xyz coordinates * 20 lip landmarks
+    params = HParams(n_landmark_xyz=60, pretrain=False)
     model = TextLandmarkModel(params)
     if torch.cuda.is_available():
         model = model.cuda()
