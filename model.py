@@ -580,11 +580,38 @@ class Decoder(nn.Module):
 class LandmarkDecoder(nn.Module):
     def __init__(self, hparams: HParams):
         super(LandmarkDecoder, self).__init__()
-        self.xyz = Decoder(replace(hparams, n_mel_channels=hparams.n_landmark_xyz))
+        self.xyz = Decoder(
+            replace(
+                hparams,
+                n_mel_channels=hparams.n_landmark_xyz,
+                prenet_dim=hparams.n_landmark_xyz,
+            )
+        )
         self.mel = Decoder(hparams)
 
     def forward(self, memory, landmarks, memory_lengths):
-        return self.xyz(memory, landmarks, memory_lengths)
+        decoder_input = self.xyz.get_go_frame(memory).unsqueeze(0)
+        decoder_inputs = self.xyz.parse_decoder_inputs(landmarks)
+        decoder_inputs = torch.cat((decoder_input, decoder_inputs), dim=0)
+        # decoder_inputs = self.prenet(decoder_inputs)
+
+        self.xyz.initialize_decoder_states(
+            memory, mask=~get_mask_from_lengths(memory_lengths)
+        )
+
+        xyz_outputs, gate_outputs, alignments = [], [], []
+        while len(xyz_outputs) < decoder_inputs.size(0) - 1:
+            decoder_input = decoder_inputs[len(xyz_outputs)]
+            xyz_output, gate_output, attention_weights = self.xyz.decode(decoder_input)
+            xyz_outputs += [xyz_output.squeeze(1)]
+            gate_outputs += [gate_output.squeeze(1)]
+            alignments += [attention_weights]
+
+        xyz_outputs, gate_outputs, alignments = self.xyz.parse_decoder_outputs(
+            xyz_outputs, gate_outputs, alignments
+        )
+
+        return xyz_outputs, gate_outputs, alignments
 
     def inference(self, memory):
         xyz_input = self.xyz.get_go_frame(memory)
@@ -595,7 +622,7 @@ class LandmarkDecoder(nn.Module):
 
         xyz_outputs, gate_outputs, alignments = [], [], []
         while True:
-            xyz_input = self.xyz.prenet(xyz_input)
+            # xyz_input = self.xyz.prenet(xyz_input)
             xyz_output, _, alignment = self.xyz.decode(xyz_input)
 
             mel_input = self.mel.prenet(mel_input)
