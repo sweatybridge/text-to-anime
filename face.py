@@ -233,8 +233,9 @@ def show_ground_truth():
         lips -= lips.mean(axis=0)
         data[i] = lips
     # Interpolate to 12.5 ms frame hop (ie. 80 fps)
-    xp = np.arange(data.shape[0]) / 30 * 80
-    frames = int(data.shape[0] / 30 * 80)
+    xp = np.arange(data.shape[0]) / 25 * 80
+    frames = int(data.shape[0] / 25 * 80)
+    print(f"Frames: {frames}")
     xs = np.arange(frames)
     interpolated = np.zeros(shape=(frames, data.shape[1], data.shape[2]))
     for i in range(data.shape[1]):
