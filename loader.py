@@ -49,8 +49,8 @@ class TextLandmarkLoader(Dataset):
         for i, row in df.iterrows():
             norm[i] = self.normalize_landmarks(row, video_id)
         # Interpolate to 12.5 ms frame hop (ie. 80 fps)
-        xp = np.arange(norm.shape[0]) / 30 * 80
-        frames = int(norm.shape[0] / 30 * 80)
+        xp = np.arange(norm.shape[0]) / 25 * 80
+        frames = int(norm.shape[0] / 25 * 80)
         xs = np.arange(frames)
         interpolated = np.zeros(shape=(frames, norm.shape[1]))
         for i in range(norm.shape[1]):
