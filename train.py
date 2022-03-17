@@ -184,7 +184,7 @@ if __name__ == "__main__":
     hparams = HParams(
         n_landmark_xyz=60,
         # max_decoder_steps=240,
-        epochs=50,
+        # epochs=50,
         iters_per_checkpoint=45,
         learning_rate=2e-3,
         batch_size=8,

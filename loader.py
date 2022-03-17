@@ -123,6 +123,7 @@ class TextLandmarkCollate:
 
 if __name__ == "__main__":
     trainset = TextLandmarkLoader()
+    print(f"Samples: {len(trainset)}")
     text, landmarks = trainset[0]
     print(text.shape, landmarks.shape)
     collate_fn = TextLandmarkCollate()
