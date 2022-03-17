@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def read_loss(path):
@@ -60,5 +60,22 @@ def pretrain_vs_no():
     compare([train, train_p], "Train loss (lips only)", ["No Pretrain", "Pretrain"])
     compare([val, val_p], "Val loss (lips only)", ["No Pretrain", "Pretrain"])
 
+
+def pre_post_none():
+    train_none, val_none = read_loss("loss/none.txt")
+    train_pre, val_pre = read_loss("loss/pre.txt")
+    train_post, val_post = read_loss("loss/post.txt")
+    legend = ["No Pre / Post", "Only Pre", "Pre + Post"]
+    compare([train_none, train_pre, train_post], "Training loss", legend)
+    compare([val_none, val_pre, val_post], "Validation loss", legend)
+
+
+def none_500():
+    train, val = read_loss("loss/500_none.txt")
+    render(train, val, "No Pre/Post (lips only)")
+
+
 if __name__ == "__main__":
-    lips_vs_full()
+    # lips_vs_full()
+    none_500()
+    # pre_post_none()

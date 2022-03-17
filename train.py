@@ -185,7 +185,7 @@ if __name__ == "__main__":
         n_landmark_xyz=60,
         # max_decoder_steps=240,
         # epochs=50,
-        iters_per_checkpoint=45,
+        iters_per_checkpoint=50,
         learning_rate=2e-3,
         batch_size=8,
         fp16_run=True,
