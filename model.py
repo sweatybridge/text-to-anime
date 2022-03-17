@@ -697,7 +697,7 @@ class TextLandmarkModel(nn.Module):
         super(TextLandmarkModel, self).__init__()
         self.mask_padding = hparams.mask_padding
         self.fp16_run = hparams.fp16_run
-        self.n_out_channels = hparams.n_landmark_xyz
+        self.n_xyz_channels = hparams.n_landmark_xyz
         self.n_frames_per_step = hparams.n_frames_per_step
         self.embedding = nn.Embedding(hparams.n_symbols, hparams.symbols_embedding_dim)
         std = sqrt(2.0 / (hparams.n_symbols + hparams.symbols_embedding_dim))
@@ -705,6 +705,7 @@ class TextLandmarkModel(nn.Module):
         self.embedding.weight.data.uniform_(-val, val)
         self.encoder = Encoder(hparams)
         self.decoder = LandmarkDecoder(hparams)
+        self.postnet = Postnet(replace(hparams, n_mel_channels=hparams.n_landmark_xyz))
 
         # Initialise with pretrained weights and freeze
         if hparams.pretrain:
@@ -748,11 +749,13 @@ class TextLandmarkModel(nn.Module):
 
     def parse_output(self, decoder_outputs, output_lengths):
         mask = ~get_mask_from_lengths(output_lengths)
-        mask = mask.expand(self.n_out_channels, mask.size(0), mask.size(1))
+        mask = mask.expand(self.n_xyz_channels, mask.size(0), mask.size(1))
         mask = mask.permute(1, 0, 2)
 
         decoder_outputs[0].data.masked_fill_(mask, 0.0)
-        decoder_outputs[1].data.masked_fill_(mask[:, 0, :], 1e3)  # gate energies
+        decoder_outputs[1].data.masked_fill_(mask, 0.0)
+        decoder_outputs[2].data.masked_fill_(mask[:, 0, :], 1e3)  # gate energies
+
         return decoder_outputs
 
     def forward(self, inputs):
@@ -761,17 +764,20 @@ class TextLandmarkModel(nn.Module):
 
         embedded_inputs = self.embedding(text_inputs).transpose(1, 2)
         encoder_outputs = self.encoder(embedded_inputs, text_lengths)
-        decoder_outputs = self.decoder(encoder_outputs, landmarks, text_lengths)
-
-        outputs = (
-            self.parse_output(decoder_outputs, output_lengths)
-            if self.mask_padding
-            else decoder_outputs
+        xyz_outputs, gate_outputs, alignments = self.decoder(
+            encoder_outputs, landmarks, text_lengths
         )
-        return outputs
+
+        xyz_outputs_postnet = xyz_outputs + self.postnet(xyz_outputs)
+        decoder_outputs = [xyz_outputs, xyz_outputs_postnet, gate_outputs, alignments]
+        if not self.mask_padding:
+            return decoder_outputs
+        return self.parse_output(decoder_outputs, output_lengths)
 
     def inference(self, inputs):
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
         encoder_outputs = self.encoder.inference(embedded_inputs)
-        decoder_outputs = self.decoder.inference(encoder_outputs)
+        xyz_outputs, gate_outputs, alignments = self.decoder.inference(encoder_outputs)
+        xyz_outputs_postnet = xyz_outputs + self.postnet(xyz_outputs)
+        decoder_outputs = [xyz_outputs, xyz_outputs_postnet, gate_outputs, alignments]
         return decoder_outputs

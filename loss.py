@@ -75,9 +75,12 @@ class TextLandmarkLoss(nn.Module):
     def forward(self, model_output, targets):
         xyz_target = targets[0]
         xyz_target.requires_grad = False
-        xyz_out = model_output[0]
+
+        xyz_out, xyz_out_postnet, _, _ = model_output
         xyz_loss = self.xyz_loss(xyz_out, xyz_target)
-        return xyz_loss
+        post_loss = self.xyz_loss(xyz_out_postnet, xyz_target)
+
+        return xyz_loss + post_loss
 
 
 if __name__ == "__main__":
