@@ -81,7 +81,9 @@ def main(hparams, checkpoint_path=None):
     torch.cuda.manual_seed(hparams.seed)
 
     # Initialise model with pretrained weights and freeze
-    model = TextLandmarkModel(hparams).cuda()
+    model = TextLandmarkModel(hparams)
+    if torch.cuda.is_available():
+        model = model.cuda()
 
     if hparams.fp16_run:
         model.decoder.xyz.attention_layer.score_mask_value = np.finfo("float16").min
