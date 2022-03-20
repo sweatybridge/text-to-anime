@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import numpy as np
@@ -21,6 +22,8 @@ class TextLandmarkLoader(Dataset):
         self.label_dir = "pretrain" if train else "trainval"
         label_path = Path("clean") / self.label_dir
         self.landmark_paths = list(sorted(label_path.glob("*/*.csv")))
+        with open("video/fps.json", "r") as f:
+            self.fps = json.load(f)
         self.speaker_embedding = {}
         for path in self.landmark_paths:
             speaker = path.parent.stem
@@ -49,8 +52,9 @@ class TextLandmarkLoader(Dataset):
         for i, row in df.iterrows():
             norm[i] = self.normalize_landmarks(row, video_id)
         # Interpolate to 12.5 ms frame hop (ie. 80 fps)
-        xp = np.arange(norm.shape[0]) / 25 * 80
-        frames = int(norm.shape[0] / 25 * 80)
+        fps = self.fps[video_id]
+        xp = np.arange(norm.shape[0]) / fps * 80
+        frames = int(norm.shape[0] / fps * 80)
         xs = np.arange(frames)
         interpolated = np.zeros(shape=(frames, norm.shape[1]))
         for i in range(norm.shape[1]):

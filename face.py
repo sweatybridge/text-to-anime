@@ -1,4 +1,4 @@
-from glob import glob
+import json
 from pathlib import Path
 
 import cv2
@@ -62,7 +62,7 @@ def load_frames(root: Path):
 
     data = [
         pd.read_csv(fp, sep=", ", engine="python").nlargest(1, ["confidence"])
-        for fp in sorted(glob(str(root / "frame_*.csv")))
+        for fp in sorted(root.glob("frame_*.csv"))
     ]
     df = pd.concat(data)
     df.to_csv(str(root / "all_frames.csv"))
@@ -77,7 +77,7 @@ def main():
 
     start = None
     cv2.namedWindow("frame")
-    for fp in sorted(glob(str(root / "*.jpg"))):
+    for fp in sorted(root.glob("*.jpg")):
         frame = int(fp.split("_")[-1].split(".")[0])
         if start is None:
             start = frame
@@ -225,16 +225,19 @@ def create_anime(data: np.ndarray) -> Animation:
 
 
 def show_ground_truth():
-    # df = pd.read_csv("clean/trainval/1BHOflzxPjI/00002.csv")
-    df = pd.read_csv("clean/trainval/0d6iSvF1UmA/00009.csv")
+    ref = Path("clean/trainval/0d6iSvF1UmA/00009.csv")
+    df = pd.read_csv(str(ref))
     data = np.empty((len(df), 68, 3))
     for i, row in df.iterrows():
         lips = normalize(row)
         lips -= lips.mean(axis=0)
         data[i] = lips
     # Interpolate to 12.5 ms frame hop (ie. 80 fps)
-    xp = np.arange(data.shape[0]) / 25 * 80
-    frames = int(data.shape[0] / 25 * 80)
+    video = ref.parent.stem
+    with open("video/fps.json", "r") as f:
+        fps = json.load(f)[video]
+    xp = np.arange(data.shape[0]) / fps * 80
+    frames = int(data.shape[0] / fps * 80)
     print(f"Frames: {frames}")
     xs = np.arange(frames)
     interpolated = np.zeros(shape=(frames, data.shape[1], data.shape[2]))
