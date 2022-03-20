@@ -54,6 +54,7 @@ def main(
     text: Optional[str] = None,
     file: Optional[Path] = None,
 ) -> None:
+    torch.manual_seed(128)
     model = load_model(artefact)
     lips = load_lips(face)
     # Load input text

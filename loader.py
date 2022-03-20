@@ -129,18 +129,19 @@ if __name__ == "__main__":
     trainset = TextLandmarkLoader()
     print(f"Samples: {len(trainset)}")
     text, landmarks = trainset[0]
-    print(text.shape, landmarks.shape)
+    print(f"Batch: {text.shape}, {landmarks.shape}")
     collate_fn = TextLandmarkCollate()
     train_loader = DataLoader(
         trainset,
         num_workers=1,
         shuffle=False,
         sampler=None,
-        batch_size=1,
+        batch_size=8,
         pin_memory=False,
         drop_last=True,
         collate_fn=collate_fn,
     )
+    print(f"Steps: {len(train_loader)}")
     for batch in train_loader:
         for item in batch:
             print(item.shape)

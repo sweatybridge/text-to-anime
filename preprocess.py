@@ -41,7 +41,7 @@ def export_frames(path, train=True):
 
         start = bbox.index.min()
         end = bbox.index.max()
-        offset = start / fps
+        # offset = start / fps
         while capture.isOpened():
             _, src = capture.read()
             frame = capture.get(cv2.CAP_PROP_POS_FRAMES)

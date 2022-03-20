@@ -46,7 +46,7 @@ def validate(model, criterion, valset, batch_size, collate_fn):
     model.eval()
     with torch.no_grad():
         val_loader = DataLoader(
-            valset,
+            dataset=valset,
             sampler=None,
             num_workers=1,
             shuffle=False,
@@ -56,13 +56,14 @@ def validate(model, criterion, valset, batch_size, collate_fn):
         )
 
         val_loss = 0.0
-        for i, batch in enumerate(val_loader):
+        steps = len(val_loader)
+        for batch in val_loader:
             x, y = model.parse_batch(batch)
             y_pred = model(x)
             loss = criterion(y_pred, y)
             reduced_val_loss = loss.item()
             val_loss += reduced_val_loss
-        val_loss = val_loss / (i + 1)
+        val_loss /= steps
 
     model.train()
     return val_loss
@@ -91,7 +92,7 @@ def main(hparams, checkpoint_path=None):
     valset = TextLandmarkLoader(train=False)
     collate_fn = TextLandmarkCollate()
     train_loader = DataLoader(
-        trainset,
+        dataset=trainset,
         num_workers=1,
         shuffle=True,
         sampler=None,
@@ -106,7 +107,7 @@ def main(hparams, checkpoint_path=None):
     iteration = 0
     epoch_offset = 0
     optimizer = torch.optim.Adam(
-        model.parameters(),
+        params=model.parameters(),
         lr=hparams.learning_rate,
         weight_decay=hparams.weight_decay,
     )
@@ -126,11 +127,10 @@ def main(hparams, checkpoint_path=None):
         epoch_offset = max(0, int(iteration / len(train_loader)))
 
     model.train()
-    is_overflow = False
     # ================ MAIN TRAINNIG LOOP! ===================
     for epoch in range(epoch_offset, hparams.epochs):
         print(f"Epoch: {epoch}")
-        for i, batch in enumerate(train_loader):
+        for batch in train_loader:
             start = time.perf_counter()
             model.zero_grad()
             with torch.cuda.amp.autocast():
@@ -143,9 +143,9 @@ def main(hparams, checkpoint_path=None):
 
             scaler.unscale_(optimizer)
             grad_norm = torch.nn.utils.clip_grad_norm_(
-                model.parameters(), hparams.grad_clip_thresh
+                parameters=model.parameters(),
+                max_norm=hparams.grad_clip_thresh,
             )
-            is_overflow = math.isnan(grad_norm)
 
             scaler.step(optimizer)
             scaler.update()
@@ -153,9 +153,6 @@ def main(hparams, checkpoint_path=None):
             scheduler.step()
 
             iteration += 1
-            if is_overflow:
-                continue
-
             duration = time.perf_counter() - start
             print(
                 f"Train loss {iteration} {reduced_loss:.6f} "
@@ -167,7 +164,7 @@ def main(hparams, checkpoint_path=None):
                     model, criterion, valset, hparams.batch_size, collate_fn
                 )
                 print(f"Validation loss {iteration}: {val_loss:9f}")
-                if val_loss < best:
+                if val_loss < best and not math.isnan(grad_norm):
                     save_checkpoint(
                         model,
                         optimizer,
