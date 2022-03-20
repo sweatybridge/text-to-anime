@@ -26,7 +26,7 @@ def render(train, val, title):
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.xlim(left=0)
-    plt.ylim(bottom=0)
+    plt.ylim(bottom=0, top=0.13)
     plt.title(title)
     plt.legend(["Train", "Val"])
     plt.tight_layout()

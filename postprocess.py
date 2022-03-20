@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from face import load_frames, normalize
+from face import load_frames
 
 
 def merge(video_id, train=True):
