@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 from pathlib import Path
 
 import cv2
@@ -7,6 +8,8 @@ import numpy as np
 def extract(path: Path, skip: int = 2, total: int = 7):
     output = []
     capture = cv2.VideoCapture(str(path))
+    fps = capture.get(cv2.CAP_PROP_FPS)
+    print(f"{path}: {fps}")
 
     count = 0
     while capture.isOpened():
@@ -16,6 +19,7 @@ def extract(path: Path, skip: int = 2, total: int = 7):
         if src is None:
             break
         frame = capture.get(cv2.CAP_PROP_POS_FRAMES)
+        # frame = int(frame / fps * 25)
         if frame % skip:
             continue
         cropped = src[50:-50, 130:-130, :]
@@ -26,9 +30,8 @@ def extract(path: Path, skip: int = 2, total: int = 7):
     return np.concatenate(output, axis=1)
 
 
-def main():
-    root = Path("report")
-    merged = [extract(p) for p in sorted(root.glob("landmarks_68_*.mp4"))]
+def main(root: Path):
+    merged = [extract(p, skip=15) for p in sorted(root.glob("lips_*.mp4"))]
     # merged.append(merged[0][:, 2660:, :])
     # merged[0] = merged[0][:, :2660, :]
     img = np.concatenate(merged, axis=0)
@@ -37,4 +40,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = ArgumentParser()
+    parser.add_argument(
+        "-i",
+        dest="root",
+        type=Path,
+        help="Path to source videos",
+        default="output/00009",
+    )
+    args = parser.parse_args()
+    main(**vars(args))
