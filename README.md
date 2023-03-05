@@ -6,7 +6,7 @@ Convert text and audio to facial expressions
 
 ```bash
 python3.10 -m venv venv
-echo $(pwd) > venv/lib/python3.10/site-packages/library.pth
+echo $(pwd) > venv/lib/python3.10/site-packages/module.pth
 . venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
 ```

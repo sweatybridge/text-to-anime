@@ -43,7 +43,7 @@ def export_frames(path: Path):
 def main(emotion: str = "*", actor: str = "*"):
     emo = f"[1-{len(Emotion)}]" if emotion == "*" else Emotion[emotion].value
     # {video}-{speech}-{emotion}-{intensity}-{statement}-{repetition}-{actor}
-    videos = Path("ravdess").glob(f"**/02-01-0{emo}-01-*-{actor}.mp4")
+    videos = Path("video").glob(f"**/02-01-0{emo}-01-*-{actor}.mp4")
     for fp in sorted(videos):
         export_frames(fp)
 

@@ -3,7 +3,7 @@ from pathlib import Path
 from face import load_frames
 
 
-def merge(video_id, train=True):
+def merge(video_id: str, train=True):
     label_dir = "pretrain" if train else "trainval"
     clean = Path("clean") / label_dir / video_id
     clean.mkdir(parents=True, exist_ok=True)

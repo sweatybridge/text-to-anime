@@ -6,10 +6,13 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from loader import TextLandmarkCollate, TextLandmarkLoader
-from loss import TextLandmarkLoss
-from model import TextLandmarkModel
-from utils import HParams
+from model import (
+    TextLandmarkCollate,
+    TextLandmarkLoader,
+    TextLandmarkLoss,
+    TextLandmarkModel,
+    HParams,
+)
 
 
 def load_checkpoint(checkpoint_path, model, optimizer, scaler, scheduler):

@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from face import normalize
+from animate import normalize
 from label import parse_data
 from text import text_to_sequence
 

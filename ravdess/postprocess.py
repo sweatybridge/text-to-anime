@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fire import Fire
 
-from face import load_frames
+from animate.face import load_frames
 
 
 def merge_frames(fp: Path):

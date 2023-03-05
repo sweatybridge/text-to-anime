@@ -6,10 +6,9 @@ import numpy as np
 import pandas as pd
 import torch
 
-from face import create_anime, normalize
-from model import TextLandmarkModel
+from animate import create_anime, normalize
+from model import TextLandmarkModel, HParams
 from text import text_to_sequence
-from utils import HParams
 
 
 def load_model(path: Path) -> TextLandmarkModel:
