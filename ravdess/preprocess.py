@@ -4,6 +4,8 @@ from pathlib import Path
 import cv2
 from fire import Fire
 
+from constants import LANDMARK_NOISY_DIR, RAW_VIDEO_DIR
+
 
 class Emotion(Enum):
     neutral = 1
@@ -22,7 +24,7 @@ def export_frames(path: Path):
     ids = video_id.split("-")
     emo = Emotion(int(ids[2]))
     # Create output directory
-    noisy = Path("noisy") / emo.name / f"Actor_{ids[-1]}" / video_id
+    noisy = LANDMARK_NOISY_DIR / emo.name / f"Actor_{ids[-1]}" / video_id
     noisy.mkdir(parents=True, exist_ok=True)
     # Process video
     capture = cv2.VideoCapture(str(path))
@@ -43,7 +45,7 @@ def export_frames(path: Path):
 def main(emotion: str = "*", actor: str = "*"):
     emo = f"[1-{len(Emotion)}]" if emotion == "*" else Emotion[emotion].value
     # {video}-{speech}-{emotion}-{intensity}-{statement}-{repetition}-{actor}
-    videos = Path("video").glob(f"**/02-01-0{emo}-01-*-{actor}.mp4")
+    videos = RAW_VIDEO_DIR.glob(f"**/02-01-0{emo}-01-*-{actor}.mp4")
     for fp in sorted(videos):
         export_frames(fp)
 

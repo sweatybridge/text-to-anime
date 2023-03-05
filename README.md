@@ -45,7 +45,7 @@ python lrs3_v0.4/preprocess.py
 4. Detect facial landmarks using OpenFace 2.0
 
 ```bash
-docker-compose up
+docker-compose -f landmark/docker-compose.yml up
 ```
 
 5. Copy high confidence detections to `clean` directory

@@ -1,3 +1,3 @@
-from face import create_anime, normalize
+from .face import create_anime, load_frames, normalize
 
-__all__ = ["create_anime", "normalize"]
+__all__ = ["create_anime", "load_frames", "normalize"]

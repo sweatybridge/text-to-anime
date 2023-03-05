@@ -2,10 +2,11 @@ from pathlib import Path
 
 import cv2
 
+from constants import LANDMARK_NOISY_DIR, RAW_VIDEO_DIR
 from label import parse_data
 
 
-def export_frames(path, train=True):
+def export_frames(path: Path, train=True):
     video_id = path.stem
     capture = cv2.VideoCapture(str(path))
     cv2.namedWindow(winname="frame")
@@ -35,7 +36,7 @@ def export_frames(path, train=True):
 
             # TODO: filter out frames without speech
             path = (
-                Path("noisy")
+                LANDMARK_NOISY_DIR
                 / label_dir
                 / video_id
                 / fp.stem
@@ -50,7 +51,7 @@ def export_frames(path, train=True):
 
 if __name__ == "__main__":
     # export_frames(path=Path("data") / "1BHOflzxPjI.mp4", train=False)
-    video_dir = Path("video")
-    for path in sorted(video_dir.glob("*.mp4")):
+    videos = RAW_VIDEO_DIR.glob("*.mp4")
+    for path in sorted(videos):
         export_frames(path)
         export_frames(path, train=False)
