@@ -5,7 +5,7 @@ import numpy as np
 import streamlit as st
 import streamlit.components.v1 as components
 
-from face import create_anime
+from animate import create_anime
 from model import TextLandmarkModel
 from score import load_lips, load_model, predict
 
