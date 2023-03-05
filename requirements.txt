@@ -8,3 +8,4 @@ unidecode
 # tensorboard
 streamlit
 # librosa
+fire

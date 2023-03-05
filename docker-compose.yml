@@ -8,4 +8,4 @@ services:
       - ./landmark.sh:/home/openface-build/landmark.sh
     command:
       - ./landmark.sh
-      - 0FQXicAGy5U
+      # - 0FQXicAGy5U
