@@ -2,11 +2,16 @@
 
 Convert text and audio to facial expressions
 
-## Web App
+## Setup
 
 ```bash
-pip install -r requirements.txt
+python3.10 -m venv venv
+echo $(pwd) > venv/lib/python3.10/site-packages/library.pth
+. venv/bin/activate
+pip install -r requirements.txt -r requirements-dev.txt
 ```
+
+## Web App
 
 - Save trained model to `artefact/best-lips.pt`
 - [M1] Comment out all references to librosa
