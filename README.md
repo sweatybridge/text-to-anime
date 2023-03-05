@@ -39,7 +39,7 @@ streamlit run app.py
 3. Extract annotated frames from download videos to `noisy` directory
 
 ```bash
-python preprocess.py
+python lrs3_v0.4/preprocess.py
 ```
 
 4. Detect facial landmarks using OpenFace 2.0
@@ -51,7 +51,7 @@ docker-compose up
 5. Copy high confidence detections to `clean` directory
 
 ```bash
-python postprocess.py
+python lrs3_v0.4/postprocess.py
 ```
 
 ## Training

@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 from face import normalize
-from preprocess import parse_data
+from label import parse_data
 from text import text_to_sequence
 
 

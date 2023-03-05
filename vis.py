@@ -3,7 +3,7 @@ from pathlib import Path
 
 import cv2
 
-from preprocess import parse_data
+from label import parse_data
 
 
 def main(video_id, save=False):
