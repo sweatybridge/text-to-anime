@@ -45,7 +45,7 @@ class TextLandmarkLoader(Dataset):
         return result
 
     def get_landmarks(self, path):
-        video_id = path.parent.stem
+        video_id = path.stem
         df = pd.read_csv(str(path))
         # Only load lip positions
         norm = np.zeros(shape=(df.shape[0], 60))
