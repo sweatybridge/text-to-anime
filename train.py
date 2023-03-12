@@ -7,11 +7,11 @@ import torch
 from torch.utils.data import DataLoader
 
 from model import (
+    HParams,
     TextLandmarkCollate,
     TextLandmarkLoader,
     TextLandmarkLoss,
     TextLandmarkModel,
-    HParams,
 )
 
 

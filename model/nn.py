@@ -5,7 +5,6 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 from torch.nn import functional as F
-
 from utils import HParams, get_mask_from_lengths, to_gpu
 
 
@@ -732,6 +731,11 @@ class TextLandmarkModel(nn.Module):
         self.embedding.weight.data.uniform_(-val, val)
         self.encoder = Encoder(hparams)
         self.decoder = LandmarkDecoder(hparams)
+        
+        self.emotion_embedding = nn.Embedding(hparams.n_emotions, hparams.emotion_embedding_dim)
+        std = sqrt(2.0 / (hparams.n_emotions + hparams.emotion_embedding_dim))
+        val = sqrt(3.0) * std  # uniform bounds for std
+        self.emotion_embedding.weight.data.uniform_(-val, val)
 
         # Initialise with pretrained weights and freeze
         if hparams.pretrain:
@@ -759,6 +763,7 @@ class TextLandmarkModel(nn.Module):
             landmarks_padded,
             gate_padded,
             output_lengths,
+            emotion_padded
         ) = batch
 
         text_padded = to_gpu(text_padded).long()
@@ -767,9 +772,10 @@ class TextLandmarkModel(nn.Module):
         landmarks_padded = to_gpu(landmarks_padded).float()
         gate_padded = to_gpu(gate_padded).float()
         output_lengths = to_gpu(output_lengths).long()
+        emotion_padded = to_gpu(emotion_padded).long()
 
         return (
-            (text_padded, input_lengths, landmarks_padded, max_len, output_lengths),
+            (text_padded, input_lengths, landmarks_padded, max_len, output_lengths, emotion_padded),
             (landmarks_padded, gate_padded),
         )
 
@@ -783,9 +789,13 @@ class TextLandmarkModel(nn.Module):
         return decoder_outputs
 
     def forward(self, inputs):
-        text_inputs, text_lengths, landmarks, max_len, output_lengths = inputs
+        text_inputs, text_lengths, landmarks, max_len, output_lengths, emotion_padded = inputs
         text_lengths, output_lengths = text_lengths.data, output_lengths.data
 
+
+        embedded_inputs = torch.cat([embedded_inputs, embedded_emotions], dim=1)
+
+        embedded_emotions = self.emotion_embedding(emotion_padded).transpose(1, 2)
         embedded_inputs = self.embedding(text_inputs).transpose(1, 2)
         encoder_outputs = self.encoder(embedded_inputs, text_lengths)
         decoder_outputs = self.decoder(encoder_outputs, landmarks, text_lengths)

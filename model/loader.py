@@ -65,13 +65,23 @@ class TextLandmarkLoader(Dataset):
         meta, _, _ = parse_data(path)
         norm = text_to_sequence(meta["Text"], self.text_cleaners)
         return torch.IntTensor(norm)
-
+    
+    def get_emotion(self, path):
+        video_id = path.parent.stem
+        emotion_id = video_id[7]
+        if emotion_id == "5":
+            emotion = text_to_sequence("angry", self.text_cleaners)
+        elif emotion_id == "8":
+            emotion = text_to_sequence("surprised", self.text_cleaners)
+        return torch.IntTensor(emotion)
+    
     def __getitem__(self, index):
         fp = self.landmark_paths[index]
         landmarks = self.get_landmarks(fp)
-        clip = Path("lrs3_v0.4") / self.label_dir / fp.parent.stem / fp.stem
+        clip = Path("ravdess") / self.label_dir / fp.parent.stem / fp.stem
         text = self.get_text(clip.with_suffix(".txt"))
-        return (text, landmarks)
+        emotion = self.get_emotion(clip.with_suffix(".txt"))
+        return (text, landmarks, emotion)
 
     def __len__(self):
         return len(self.landmark_paths)
@@ -87,7 +97,7 @@ class TextLandmarkCollate:
         """Collate's training batch from normalized text and facial landmarks
         PARAMS
         ------
-        batch: [text_normalized, landmarks_normalized]
+        batch: [text_normalized, landmarks_normalized, emotion_normalized]
         """
         # Right zero-pad all one-hot text sequences to max input length
         input_lengths, ids_sorted_decreasing = torch.sort(
@@ -122,7 +132,15 @@ class TextLandmarkCollate:
             gate_padded[i, mel.size(1) - 1 :] = 1
             output_lengths[i] = mel.size(1)
 
-        return text_padded, input_lengths, landmarks_padded, gate_padded, output_lengths
+        # Right zero-pad emotion
+        max_emotion_len = max([x[2].size(0) for x in batch])
+        emotion_padded = torch.LongTensor(len(batch), max_emotion_len)
+        emotion_padded.zero_()
+        for i in range(len(ids_sorted_decreasing)):
+            emotion = batch[ids_sorted_decreasing[i]][2]
+            emotion_padded[i, : emotion.size(0)] = emotion
+
+        return text_padded, input_lengths, landmarks_padded, gate_padded, output_lengths, emotion_padded
 
 
 if __name__ == "__main__":
