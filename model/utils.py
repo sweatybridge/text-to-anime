@@ -50,9 +50,9 @@ class HParams:
     ################################
     n_symbols: int = len(symbols)
     symbols_embedding_dim: int = 512
-    
+
     # Include emotions
-    n_emotions: int = 2 
+    n_emotions: int = 2
     emotion_embedding_dim = 32
 
     # Encoder parameters

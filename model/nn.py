@@ -731,7 +731,7 @@ class TextLandmarkModel(nn.Module):
         self.embedding.weight.data.uniform_(-val, val)
         self.encoder = Encoder(hparams)
         self.decoder = LandmarkDecoder(hparams)
-        
+
         self.emotion_embedding = nn.Embedding(hparams.n_emotions, hparams.emotion_embedding_dim)
         std = sqrt(2.0 / (hparams.n_emotions + hparams.emotion_embedding_dim))
         val = sqrt(3.0) * std  # uniform bounds for std
@@ -792,11 +792,9 @@ class TextLandmarkModel(nn.Module):
         text_inputs, text_lengths, landmarks, max_len, output_lengths, emotion_padded = inputs
         text_lengths, output_lengths = text_lengths.data, output_lengths.data
 
-
-        embedded_inputs = torch.cat([embedded_inputs, embedded_emotions], dim=1)
-
         embedded_emotions = self.emotion_embedding(emotion_padded).transpose(1, 2)
         embedded_inputs = self.embedding(text_inputs).transpose(1, 2)
+        embedded_inputs = torch.cat([embedded_inputs, embedded_emotions], dim=1)
         encoder_outputs = self.encoder(embedded_inputs, text_lengths)
         decoder_outputs = self.decoder(encoder_outputs, landmarks, text_lengths)
 
