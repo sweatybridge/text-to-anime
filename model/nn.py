@@ -5,7 +5,8 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 from torch.nn import functional as F
-from utils import HParams, get_mask_from_lengths, to_gpu
+
+from model.utils import HParams, get_mask_from_lengths, to_gpu
 
 
 class LinearNorm(torch.nn.Module):
@@ -153,7 +154,6 @@ class Attention(nn.Module):
         attention_context = attention_context.squeeze(1)
 
         return attention_context, attention_weights
-
 
 class Prenet(nn.Module):
     def __init__(self, in_dim, sizes):

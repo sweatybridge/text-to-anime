@@ -67,7 +67,7 @@ class TextLandmarkLoader(Dataset):
         return torch.IntTensor(norm)
     
     def get_emotion(self, path):
-        video_id = path.parent.stem
+        video_id = path.stem
         emotion_id = video_id[7]
         if emotion_id == "5":
             emotion = text_to_sequence("angry", self.text_cleaners)
