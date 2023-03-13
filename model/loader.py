@@ -26,7 +26,7 @@ class TextLandmarkLoader(Dataset):
             self.fps = json.load(f)
         self.speaker_embedding = {}
         for path in self.landmark_paths:
-            speaker = path.parent.stem
+            speaker = path.stem
             if speaker not in self.speaker_embedding:
                 self.speaker_embedding[speaker] = []
             df = pd.read_csv(str(path)).iloc[0]
