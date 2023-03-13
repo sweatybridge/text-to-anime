@@ -66,9 +66,9 @@ class TextLandmarkLoader(Dataset):
         # norm = text_to_sequence(meta["Text"], self.text_cleaners)
         video_id = path.stem
         statement_id = video_id[13]
-        if statement_id[13] == "1":
+        if statement_id == "1":
             statement = text_to_sequence("KIDS ARE TALKING BY THE DOOR")
-        elif statement_id[13] == "2":
+        elif statement_id == "2":
             statement = text_to_sequence("DOGS ARE SITTING BY THE DOOR")
         return torch.IntTensor(statement)
     
