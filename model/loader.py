@@ -67,9 +67,9 @@ class TextLandmarkLoader(Dataset):
         video_id = path.stem
         statement_id = video_id[13]
         if statement_id == "1":
-            statement = text_to_sequence("KIDS ARE TALKING BY THE DOOR")
+            statement = text_to_sequence("KIDS ARE TALKING BY THE DOOR", self.text_cleaners)
         elif statement_id == "2":
-            statement = text_to_sequence("DOGS ARE SITTING BY THE DOOR")
+            statement = text_to_sequence("DOGS ARE SITTING BY THE DOOR", self.text_cleaners)
         return torch.IntTensor(statement)
     
     def get_emotion(self, path):
