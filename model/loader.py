@@ -20,7 +20,7 @@ class TextLandmarkLoader(Dataset):
 
     def __init__(self, train=True):
         self.label_dir = "pretrain" if train else "trainval"
-        label_path = Path("landmark/clean/angry") / self.label_dir
+        label_path = Path("landmark/clean/angry/") / self.label_dir
         self.landmark_paths = list(sorted(label_path.glob("*/*.csv")))
         with open("video/fps.json", "r") as f:
             self.fps = json.load(f)
