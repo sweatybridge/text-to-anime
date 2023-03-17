@@ -96,7 +96,7 @@ if __name__ == "__main__":
         help="Path to reference face model",
         type=Path,
         # default="clean/trainval/0d6iSvF1UmA/00009.csv",
-        default="clean/angry/trainval/Actor_01/02-01-05-01-02-02-01.csv",
+        default="landmark/clean/angry/trainval/Actor_01/02-01-05-01-02-02-01.csv",
     )
     parser.add_argument(
         "--output",
