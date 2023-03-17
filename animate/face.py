@@ -42,7 +42,7 @@ def normalize(df):
 
 def render(df):
     fig = plt.figure()
-    ax = fig.gca(projection="3d")
+    ax = fig.add_subplot(projection="3d")
 
     norm = normalize(df)
     # X, Y, Z = zip(*norm)
@@ -164,7 +164,7 @@ def snapshot(data):
         shape = (data.shape[0], data.shape[1] // 3, 3)
         data = data.reshape(shape)
     fig = plt.figure()
-    ax = fig.gca(projection="3d")
+    ax = fig.add_subplot(projection="3d")
     # ax.scatter(data[0, :, 0], data[0, :, 1], data[0, :, 2], marker="o")
     # ax.plot_trisurf(data[0, :, 0], data[0, :, 1], data[0, :, 2], cmap=cm.coolwarm)
     for line in get_face(data[0]):
@@ -205,7 +205,7 @@ def create_anime(data: np.ndarray) -> Animation:
     # Expected input shape: (n, 68, 3)
     print(f"Input shape: {data.shape}")
     fig = plt.figure()
-    ax = fig.gca(projection="3d")
+    ax = fig.add_subplot(projection="3d")
     limits = [get_bounds(data[:, 48:, i]) for i in range(3)]
     # limits[1][0] -= 10
     # limits[1][1] += 10
