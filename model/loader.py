@@ -20,7 +20,7 @@ class TextLandmarkLoader(Dataset):
 
     def __init__(self, train=True):
         self.label_dir = "pretrain" if train else "trainval"
-        label_path = Path("landmark/clean/angry") / self.label_dir
+        label_path = Path("landmark/clean") / self.label_dir
         self.landmark_paths = list(sorted(label_path.glob("*/*.csv")))
         with open("video/fps.json", "r") as f:
             self.fps = json.load(f)
@@ -84,7 +84,7 @@ class TextLandmarkLoader(Dataset):
     def __getitem__(self, index):
         fp = self.landmark_paths[index]
         landmarks = self.get_landmarks(fp)
-        clip = Path("ravdess/angry") / self.label_dir / fp.parent.stem / fp.stem
+        clip = Path("ravdess") / self.label_dir / fp.parent.stem / fp.stem
         text = self.get_text(clip.with_suffix(".txt"))
         # emotion = self.get_emotion(clip.with_suffix(".txt"))
         return (text, landmarks)
