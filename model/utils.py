@@ -58,7 +58,7 @@ class HParams:
     # Encoder parameters
     encoder_kernel_size: int = 5
     encoder_n_convolutions: int = 3
-    encoder_embedding_dim: int = 544
+    encoder_embedding_dim: int = 512
     
     # Decoder parameters
     n_frames_per_step: int = 1  # currently only 1 is supported
