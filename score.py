@@ -7,7 +7,7 @@ import pandas as pd
 import torch
 
 from animate import create_anime, normalize
-from model import TextLandmarkModel, HParams
+from model import HParams, TextLandmarkModel
 from text import text_to_sequence
 
 
@@ -95,7 +95,8 @@ if __name__ == "__main__":
         "--face",
         help="Path to reference face model",
         type=Path,
-        default="clean/trainval/0d6iSvF1UmA/00009.csv",
+        # default="clean/trainval/0d6iSvF1UmA/00009.csv",
+        default="clean/trainval/Actor_01/02-01-05-01-01-01-01.csv",
     )
     parser.add_argument(
         "--output",
