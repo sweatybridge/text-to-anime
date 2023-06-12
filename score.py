@@ -40,8 +40,11 @@ def predict(model: TextLandmarkModel, face: np.ndarray, text: str) -> np.ndarray
     # Animate lips only
     residual = mel_outputs.float().data.cpu().numpy()[0]
     data = np.zeros(shape=(residual.shape[1], face.shape[0]))
+    print(data)
+    print("=============")
     for i in range(data.shape[0]):
         data[i, :] = face
+        print(data[i, :])
     data[:, 144:] += residual.T
     return data
 
