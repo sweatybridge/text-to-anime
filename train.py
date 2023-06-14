@@ -133,6 +133,7 @@ def main(hparams, checkpoint_path=None):
 
     model.train()
     val_loss_arr = []
+    train_loss_arr = []
     # ================ MAIN TRAINNIG LOOP! ===================
     for epoch in range(epoch_offset, hparams.epochs):
         print(f"Epoch: {epoch}")
@@ -165,11 +166,13 @@ def main(hparams, checkpoint_path=None):
                 f"Grad Norm {grad_norm:.6f} {duration:.2f}s/it"
             )
 
+            train_loss_arr.append(reduced_loss)
+            val_loss_arr.append(val_loss)
+
             if iteration % hparams.iters_per_checkpoint == 0:
                 val_loss = validate(
                     model, criterion, valset, hparams.batch_size, collate_fn
                 )
-                val_loss_arr.append(val_loss)
                 print(f"Validation loss {iteration}: {val_loss:9f}")
                 if val_loss < best and not math.isnan(grad_norm):
                     save_checkpoint(
@@ -182,7 +185,9 @@ def main(hparams, checkpoint_path=None):
                         "best.pt",
                     )
                     best = val_loss
-    print("validation loss:")
+    print("train validation loss:")
+    print(train_loss_arr)
+    print("array validation loss:")
     print(val_loss_arr)
 
 
